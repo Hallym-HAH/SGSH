@@ -1,1 +1,20 @@
 .DS_Store
+
+# Flutter 관련 파일
+App/.dart_tool/
+App/.idea/
+App/.vscode/
+App/build/
+App/ios/Pods/
+App/pubspec.lock
+
+# Next.js 관련 파일
+Web/.next/
+Web/node_modules/
+Web/.env.local
+
+
+# Python 관련 파일
+AI/venv/
+AI/__pycache__/
+AI/.venv/
