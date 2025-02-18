@@ -5,6 +5,7 @@ class Store {
   final String time;
   final String number;
   final String description;
+  final String image;
   final String url;
 
   Store({
@@ -14,6 +15,7 @@ class Store {
     required this.time,
     required this.number,
     required this.description,
+    required this.image,
     required this.url,
   });
 
@@ -26,6 +28,7 @@ class Store {
       time: data["time"] ?? "운영 시간 없음",
       number: data["number"] ?? "전화번호 없음",
       description: data["description"] ?? "설명 없음",
+      image: data["image"] ?? "이미지 없음",
       url: data["url"] ?? "https://via.placeholder.com/300", // 기본 이미지
     );
   }

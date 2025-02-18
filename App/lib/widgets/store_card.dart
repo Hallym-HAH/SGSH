@@ -87,7 +87,7 @@ class StoreCard extends StatelessWidget {
                 Radius.circular(12.0),
               ), // 🔥 둥근 모서리 적용
               child: Image.network(
-                store.url, // 🔥 단일 이미지 URL 사용
+                store.image, // store.image가 null이면 빈 문자열로 처리
                 width: double.infinity,
                 height: 180,
                 fit: BoxFit.cover,
@@ -95,11 +95,11 @@ class StoreCard extends StatelessWidget {
                   if (loadingProgress == null) return child;
                   return Center(child: CircularProgressIndicator());
                 },
-                errorBuilder:
-                    (context, error, stackTrace) => Image.asset(
-                      'assets/images/sushi.png',
-                      fit: BoxFit.cover,
-                    ),
+                errorBuilder: (context, error, stackTrace) {
+                  return Center(
+                    child: Icon(Icons.error, color: Colors.red),
+                  ); // 오류 발생 시 아이콘 표시
+                },
               ),
             ),
           ),
