@@ -7,6 +7,7 @@ App/.vscode/
 App/build/
 App/ios/Pods/
 App/pubspec.lock
+App/.env
 
 # Next.js 관련 파일
 Web/.next/
