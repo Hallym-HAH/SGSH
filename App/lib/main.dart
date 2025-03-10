@@ -1,6 +1,5 @@
 import 'package:app/pages/mainpage.dart';
 import 'package:app/pages/storelist.dart';
-import 'package:app/pages/storedetail.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // ✅ dotenv 불러오기
@@ -33,50 +32,9 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => Mainpage(),
-        '/storelist': (context) => StoreListPage(),  // 추가 페이지
-        '/storedetail': (context) => StoreDetailPage(),  // 추가 페이지
+        '/storelist': (context) => StoreListPage(), // 추가 페이지
       },
     );
   }
 }
-
-
-
-
-
-
-// import 'package:app/pages/storelist.dart';
-// import 'package:flutter/material.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart';
-
-
-
-// Future<void> main() async {
-//   //📲 runApp을 수행하기전에 비동기 작업을 할 경우 추가해주는 코드입니다
-//   WidgetsFlutterBinding.ensureInitialized();
-  
-//   //📲 dotenv를 가져오는 부분
-//   var dotenv;
-//   await dotenv.load();
-  
-//   //📲 dotenv 패키지를 사용해서 민감한 정보의 값들을 가져옵니다
-//   await Supabase.initialize(
-//     url: dotenv.get("PROJECT_URL"),
-//     anonKey: dotenv.get("PROJECT_API_KEY"),
-//   );
-//   runApp(MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       home: StoreListPage(),
-//     );
-//   }
-// }
-
-
-
 

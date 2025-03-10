@@ -1,3 +1,4 @@
+import 'package:app/pages/addetail.dart';
 import 'package:app/pages/storelist.dart';
 import 'package:flutter/material.dart';
 import 'package:app/shared/menubottom.dart';
@@ -44,21 +45,40 @@ class _MainpageState extends State<Mainpage> {
         child: Column(
           children: <Widget>[
             Container(
-              height: 200, // 컨테이너 높이 설정
-              width: double.infinity, // 너비를 화면 전체로 설정
+              height: 200,
+              width: double.infinity,
               margin: const EdgeInsets.all(12.0),
               decoration: BoxDecoration(
                 color: Colors.purple,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: PageView(
-                children: ads.map((ad) => Center(
-                  child: Text(
-                    ad,
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                )).toList(),
+                children:
+                    ads
+                        .map(
+                          (ad) => InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => AdDetailPage(adText: ad),
+                                ),
+                              );
+                            },
+                            child: Center(
+                              child: Text(
+                                ad,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
               ),
             ),
             GridView.builder(
