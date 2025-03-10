@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // 📍 가게 리스트 페이지
-class StoreListPage extends StatefulWidget {
+class StoreDetailPage extends StatefulWidget {
   @override
-  _StoreListPageState createState() => _StoreListPageState();
+  _StoreDetailPageState createState() => _StoreDetailPageState();
 }
 
-class _StoreListPageState extends State<StoreListPage> {
+class _StoreDetailPageState extends State<StoreDetailPage> {
   List<Store> storeList = []; // 📌 Store 객체 리스트
   final supabase = Supabase.instance.client;
 

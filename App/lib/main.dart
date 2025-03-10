@@ -1,4 +1,6 @@
+import 'package:app/pages/mainpage.dart';
 import 'package:app/pages/storelist.dart';
+import 'package:app/pages/storedetail.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // ✅ dotenv 불러오기
@@ -28,10 +30,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: StoreListPage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => Mainpage(),
+        '/storelist': (context) => StoreListPage(),  // 추가 페이지
+        '/storedetail': (context) => StoreDetailPage(),  // 추가 페이지
+      },
     );
   }
 }
+
+
 
 
 
