@@ -1,6 +1,5 @@
-import 'package:app/shared/menubottom.dart';
 import 'package:app/widgets/store_card.dart';
-import 'package:app/models/store.dart'; // 📌 Store 모델 가져오기
+import 'package:app/models/business.dart'; // 📌 Store 모델 가져오기
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,7 +10,7 @@ class StoreListPage extends StatefulWidget {
 }
 
 class _StoreListPageState extends State<StoreListPage> {
-  List<Store> storeList = []; // 📌 Store 객체 리스트
+  List<business_data> storeList = []; // 📌 Store 객체 리스트
   final supabase = Supabase.instance.client;
 
   @override
@@ -27,7 +26,7 @@ class _StoreListPageState extends State<StoreListPage> {
       setState(() {
         storeList =
             response
-                .map<Store>((data) => Store.fromMap(data))
+                .map<business_data>((data) => business_data.fromMap(data))
                 .toList(); // 🔥 변환 적용
       });
     } catch (e) {
@@ -45,7 +44,6 @@ class _StoreListPageState extends State<StoreListPage> {
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      bottomNavigationBar: MenuBottom(),
 
       body:
           storeList.isEmpty

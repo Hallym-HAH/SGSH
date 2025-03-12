@@ -1,10 +1,10 @@
 import 'package:app/pages/storedetail.dart';
 import 'package:flutter/material.dart';
-import '../models/store.dart';
+import '../models/business.dart';
 
 // 🏪 가게 카드 UI
 class StoreCard extends StatelessWidget {
-  final Store store;
+  final business_data store;
 
   const StoreCard({required this.store});
 
