@@ -19,20 +19,23 @@ class _StoreListPageState extends State<StoreListPage> {
     fetchStores();
   }
 
-  // 📌 Supabase에서 가게 데이터 가져오기
-  void fetchStores() async {
-    try {
-      var response = await supabase.from("business_data").select();
-      setState(() {
-        storeList =
-            response
-                .map<business_data>((data) => business_data.fromMap(data))
-                .toList(); // 🔥 변환 적용
-      });
-    } catch (e) {
-      print("❌ 오류 발생: $e");
-    }
+ void fetchStores() async {
+  try {
+    var response = await supabase
+        .from("business_data")
+        .select()
+        .order("id", ascending: true); // 🔥 id 기준 오름차순 정렬
+
+    setState(() {
+      storeList = response
+          .map<business_data>((data) => business_data.fromMap(data))
+          .toList(); // 🔥 변환 적용
+    });
+  } catch (e) {
+    print("❌ 오류 발생: $e");
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
