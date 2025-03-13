@@ -1,3 +1,6 @@
+import 'package:app/pages/likepage.dart';
+import 'package:app/pages/mypage.dart';
+import 'package:app/pages/searchpage.dart';
 import 'package:flutter/material.dart';
 import 'package:app/pages/mainpage.dart';
 import 'package:app/pages/storelist.dart';
@@ -30,7 +33,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   int _selectedIndex = 0; // 현재 선택된 인덱스
 
-  final List<Widget> _pages = [Mainpage(), StoreListPage()];
+  final List<Widget> _pages = [Mainpage(), SearchPage(), StoreListPage(), LikesPage(), MyPage()];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -38,7 +41,7 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -47,9 +50,15 @@ class _MyAppState extends State<MyApp> {
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
+          selectedItemColor: Colors.black, // 선택된 아이콘 색상
+          unselectedItemColor: Colors.grey, // 선택되지 않은 아이콘 색상
+          type: BottomNavigationBarType.fixed, // 5개 아이콘을 사용할 때 필요
           items: [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Store'),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
+            BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
+            BottomNavigationBarItem(icon: Icon(Icons.map), label: '지도'),
+            BottomNavigationBarItem(icon: Icon(Icons.favorite), label: '즐겨찾기'),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: '나의페이지'),
           ],
         ),
       ),
