@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app/models/business.dart';
 import 'package:app/pages/storedetail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SearchPage extends StatefulWidget {
   @override
@@ -11,39 +12,55 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final supabase = Supabase.instance.client;
-  List<business_data> storeList = []; // 전체 가게 데이터
-  List<business_data> filteredList = []; // 검색된 가게 데이터
+  List<business_data> storeList = [];
+  List<business_data> filteredList = [];
+  List<String> recentStores = [];
+
+  final List<String> popularSearches = [
+    "스시카이키",
+    "아르모니움",
+    "아오이바라",
+    "고청담 용산점",
+    "키츠 스키야키",
+    "블루메쯔 광화문점",
+    "도톤보리서울",
+    "드포레 와인다이닝 용산",
+    "야키토리 슈츠",
+    "종문"
+  ];
 
   @override
   void initState() {
     super.initState();
     fetchStores();
+    loadRecentStores();
   }
 
-  // 📌 Supabase에서 가게 데이터 가져오기
   void fetchStores() async {
     try {
       var response = await supabase.from("business_data").select().order("id", ascending: true);
       setState(() {
         storeList = response.map<business_data>((data) => business_data.fromMap(data)).toList();
-        filteredList = List.from(storeList); // 초기값 설정
+        filteredList = List.from(storeList);
       });
     } catch (e) {
       print("❌ 오류 발생: $e");
     }
   }
 
-  // 🔎 검색 기능
   void filterStores(String query) {
     setState(() {
-      if (query.isEmpty) {
-        filteredList = List.from(storeList);
-      } else {
-        filteredList = storeList.where((store) {
-          return store.name.toLowerCase().contains(query.toLowerCase()) ||
-                 store.address.toLowerCase().contains(query.toLowerCase());
-        }).toList();
-      }
+      filteredList = storeList.where((store) {
+        return store.name.toLowerCase().contains(query.toLowerCase()) ||
+            store.address.toLowerCase().contains(query.toLowerCase());
+      }).toList();
+    });
+  }
+
+  void loadRecentStores() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      recentStores = prefs.getStringList('recentStores') ?? [];
     });
   }
 
@@ -59,12 +76,11 @@ class _SearchPageState extends State<SearchPage> {
       ),
       body: Column(
         children: [
-          // 검색창
           Padding(
             padding: EdgeInsets.all(12.0),
             child: TextField(
               controller: _searchController,
-              onChanged: filterStores, // 검색어 입력 시 필터링 실행
+              onChanged: filterStores,
               decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search, color: Colors.black54),
                 hintText: '검색어를 입력하세요...',
@@ -75,39 +91,70 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
 
-          // 검색 결과 리스트
-          Expanded(
-            child: filteredList.isEmpty
-                ? Center(child: Text("검색 결과가 없습니다.", style: TextStyle(color: Colors.black54)))
-                : ListView.builder(
-                    itemCount: filteredList.length,
-                    itemBuilder: (context, index) {
-                      final store = filteredList[index];
-                      return ListTile(
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            store.image,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(Icons.store, size: 50, color: Colors.grey[400]);
-                            },
-                          ),
+          if (_searchController.text.isEmpty) ...[
+            if (recentStores.isNotEmpty) ...[
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('최근 본 가게', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              Container(
+                height: 40,
+                margin: EdgeInsets.symmetric(vertical: 8),
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: recentStores.map((storeName) => Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: ActionChip(
+                      label: Text(storeName),
+                      onPressed: () {
+                        final selectedStore = storeList.firstWhere((store) => store.name == storeName);
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => StoreDetailPage(store: selectedStore)));
+                      },
+                    ),
+                  )).toList(),
+                ),
+              ),
+            ],
+
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('실시간 인기 검색어', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: popularSearches.length,
+                itemBuilder: (context, index) => ListTile(
+                  leading: Text("${index + 1}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  title: Text(popularSearches[index]),
+                  onTap: () {
+                    _searchController.text = popularSearches[index];
+                    filterStores(popularSearches[index]);
+                  },
+                ),
+              ),
+            ),
+          ] else
+            Expanded(
+              child: filteredList.isEmpty
+                  ? Center(child: Text("검색 결과가 없습니다."))
+                  : ListView.builder(
+                      itemCount: filteredList.length,
+                      itemBuilder: (context, index) => ListTile(
+                        title: Text(filteredList[index].name),
+                        subtitle: Text(filteredList[index].address),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => StoreDetailPage(store: filteredList[index])),
                         ),
-                        title: Text(store.name, style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(store.address, style: TextStyle(color: Colors.grey[600])),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => StoreDetailPage(store: store)),
-                          );
-                        },
-                      );
-                    },
-                  ),
-          ),
+                      ),
+                    ),
+            ),
         ],
       ),
     );

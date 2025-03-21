@@ -1,8 +1,11 @@
 import 'package:app/models/article.dart';
+import 'package:app/models/business.dart';
 import 'package:app/pages/articlepage.dart';
+import 'package:app/pages/storedetail.dart';
 import 'package:app/pages/storelist.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Mainpage extends StatefulWidget {
   @override
@@ -27,11 +30,18 @@ class _MainpageState extends State<Mainpage> {
 
   List<article_data> article = []; // 📌 Store 객체 리스트
   final supabase = Supabase.instance.client;
+  late Future<SharedPreferences> prefsFuture;
 
   @override
   void initState() {
     super.initState();
+    prefsFuture = SharedPreferences.getInstance();
     fetchStores();
+
+    // ✅ 초기화 즉시 UI 갱신을 위한 코드 추가
+    prefsFuture.then((prefs) {
+      setState(() {});
+    });
   }
 
   // 📌 Supabase에서 가게 데이터 가져오기
@@ -93,20 +103,131 @@ class _MainpageState extends State<Mainpage> {
                 ],
               ),
             ),
+            buildRecentItems(),
           ],
         ),
       ),
     );
   }
 
+  Widget buildRecentItems() {
+    return FutureBuilder<SharedPreferences>(
+      future: prefsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData) {
+          return Center(child: Text("최근 본 가게가 없습니다."));
+        }
+
+        List<String> recentStores =
+            snapshot.data!.getStringList('recentStores') ?? [];
+
+        if (recentStores.isEmpty) {
+          return Center(child: Text("최근 본 가게가 없습니다."));
+        }
+
+        // ✅ 여기서 모든 비동기 작업 수행
+        return FutureBuilder<List<business_data>>(
+          future: Future.wait(
+            recentStores.map((storeName) async {
+              var response =
+                  await supabase
+                      .from('business_data')
+                      .select()
+                      .eq('name', storeName)
+                      .single();
+              return business_data.fromMap(response);
+            }),
+          ),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (!snapshot.hasData || snapshot.hasError) {
+              return Center(child: Text("최근 본 가게 정보를 불러오지 못했습니다."));
+            }
+
+            final stores = snapshot.data!;
+
+            return Container(
+              height: 120,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: stores.length,
+                itemBuilder: (context, index) {
+                  final store = stores[index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StoreDetailPage(store: store),
+                        ),
+                      );
+                    },
+                    child: Card(
+                      elevation: 3,
+                      margin: EdgeInsets.symmetric(horizontal: 8),
+                      child: Container(
+                        width: 150,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(4),
+                                ),
+                                child: Image.network(
+                                  store.image,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder:
+                                      (_, __, ___) =>
+                                          Container(color: Colors.grey),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text(
+                                store.name,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildIconText(IconData icon, String label, BuildContext context) {
     return InkWell(
       onTap: () {
-        // Navigator를 사용하여 새 페이지로 이동
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => StoreListPage()),
-        ); // NewPage는 이동할 페이지의 위젯
+        ).then((_) {
+          // ✅ 여기서 다시 prefsFuture를 갱신해줍니다.
+          setState(() {
+            prefsFuture = SharedPreferences.getInstance();
+          });
+        });
       },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
