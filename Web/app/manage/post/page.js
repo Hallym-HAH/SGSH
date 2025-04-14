@@ -866,7 +866,6 @@ const StepNavigation = ({ currentStep, totalSteps, onNext, onPrev, onComplete, i
                 try {
                     const response = await fetch(`${process.env.NEXT_PUBLIC_GCP_API_URL}/generate?name=진스키친&address=춘천&time=12시&number=010-1111-2222&description=춘천+양식+맛집`);
                     const result = await response.json();
-                    setGeneratedData(result);
                     console.log(result);
                 } catch (error) {
                     console.error('Error fetching data:', error);
