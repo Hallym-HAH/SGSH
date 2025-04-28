@@ -12,9 +12,11 @@
     "@supabase/supabase-js": "^2.48.1",
     "@tailwindcss/cli": "^4.0.17",
     "@tailwindcss/postcss": "^4.0.17",
+    "apexcharts": "^4.7.0",
     "framer-motion": "^12.6.5",
     "next": "15.1.7",
     "react": "^19.0.0",
+    "react-apexcharts": "^1.7.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
