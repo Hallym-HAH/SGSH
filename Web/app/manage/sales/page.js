@@ -1,10 +1,11 @@
 'use client'
-
+import dynamic from 'next/dynamic';
 import Manage from "../page";
 import ManageNavBar from "@/components/feature/manage_navbar";
-import SalesCalc from "@/components/feature/sales/sales_calc";
-import SalesDaily from "@/components/feature/sales/sales_daily";
 import React, { useEffect, useState } from 'react';
+
+const SalesDaily = dynamic(() => import('@/components/feature/sales/sales_daily'), { ssr: false });
+const SalesCalc = dynamic(() => import('@/components/feature/sales/sales_calc'), { ssr: false });
 
 export default function ManageCalc() {
     const [openTab, setOpenTab] = React.useState(1);
