@@ -1,3 +1,4 @@
+'use client'
 import Chart from "react-apexcharts";
 import React, { useEffect, useState } from 'react';
 import { supabaseClient } from '@/lib/supabase';
