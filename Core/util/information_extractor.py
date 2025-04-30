@@ -11,13 +11,14 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 def extractor_information(articles):
     chat = ChatOpenAI(
         model="gpt-4o-mini",
-        max_tokens=1500,
+        max_tokens=10000,
         temperature=0.1,
     )
 
     # 시스템 메시지 템플릿
     system_message = """
     당신은 블로그와 SNS 게시물에서 가게 정보를 추출하는 전문가입니다. 주어진 텍스트를 분석하여 가게에 대한 객관적인 정보와 주관적인 평가를 체계적으로 요약해주세요.
+    모든 문서를 동일한 중요도로 처리하고, 첫 번째 문서에 편향되지 않도록 주의하세요.
     정보가 명확하지 않은 경우 '정보 없음'으로, 확실하지 않은 정보는 '추정'이라고 표시해주세요.
     """
 
@@ -25,7 +26,6 @@ def extractor_information(articles):
     human_message = """
     당신은 블로그와 SNS 게시물에서 가게 정보를 추출하는 전문가입니다. 주어진 텍스트를 분석하여 다음 정보를 다음 형태로 체계적으로 요약해주세요:
     
-    글 1 정보:
     1. 기본 정보
        - 가게 이름
        - 위치/주소

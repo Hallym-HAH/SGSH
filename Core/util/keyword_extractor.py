@@ -11,8 +11,8 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 def extractor_keywords(articles, max_items=10):
     chat = ChatOpenAI(
         model="gpt-4o-mini",
-        max_tokens=1500,
-        temperature=0.4,
+        max_tokens=10000,
+        temperature=0.1,
     )
 
     # 시스템 메시지 템플릿
