@@ -1,50 +1,52 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from supabase import create_client, Client
-import os
+from fastapi.middleware.cors import CORSMiddleware  # CORS 미들웨어 임포트
+
+from util import information_extractor, keyword_extractor
+from util import generator, crawling
+import random
 from dotenv import load_dotenv
-from util import style_extractor, information_extractor, generator, keyword_extractor
 
 # 환경 변수 로드
-load_dotenv()
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
-# Supabase 클라이언트 초기화
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-# 키워드 추출 시 사용할 고정된 max_items 값
-MAX_KEYWORDS = 10
+try:
+    load_dotenv()
+except:
+    pass
 
 app = FastAPI()
 
+# CORS 미들웨어 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 출처 허용
+    allow_credentials=True,
+    allow_methods=["*"],  # 모든 HTTP 메서드 허용
+    allow_headers=["*"],  # 모든 HTTP 헤더 허용
+)
 
-class GenerationRequest(BaseModel):
-    platform: str
+@app.get("/generate")
+async def realtime_generation(
+        name: str,
+        address: str,
+        time: str,
+        number: str,
+        description: str,
+        platform: str = "인스타그램",
+        use_info: bool = False,
+        use_keyword: bool = False
+):
 
-class Article(BaseModel):
-    id: int
-    content: str
-    platform: str
-
-@app.post("/generate")
-async def realtime_generation(request: GenerationRequest):
     try:
-        response = supabase.table('articles') \
-            .select('content') \
-            .eq('platform', request.platform) \
-            .execute()
+        store_info = {
+            'name': name,
+            'address': address,
+            'time': time,
+            'number': number,
+            'description': description
+        }
 
-        if not response.data:
-            raise HTTPException(status_code=404, detail="No articles found")
-
-        articles = [item['content'] for item in response.data]
-        generated_content = main(platform=request.platform, articles=articles)
-
-        print(generated_content)
+        generated_content = main(store_info=store_info, platform=platform, max_items=10, use_info=use_info, use_keyword=use_keyword)
 
         return {
-            "platform": request.platform,
             "generated_content": generated_content
         }
 
@@ -53,16 +55,37 @@ async def realtime_generation(request: GenerationRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-def main(platform, articles):
-    information_chain = information_extractor.extractor_information(articles=articles)
-    style_chain = style_extractor.extractor_style(articles=articles)
-    keyword_chain = keyword_extractor.extractor_keywords(articles=articles, max_items=MAX_KEYWORDS)
 
-    generator_chain = generator.generator_article(articles, platform)
+def main(store_info, platform="인스타그램", max_items=10, use_info=False, use_keyword=False):
 
-    return generator_chain.invoke({
+    articles = []
+    generator_input = {
+        "name": store_info['name'],
+        "address": store_info['address'],
+        "time": store_info['time'],
+        "number": store_info['number'],
+        "description": store_info['description'],
         "platform": platform,
-        "information": information_chain,
-        "style": style_chain,
-        "keywords": keyword_chain,
-    }).content
+    }
+
+    if (use_info==True or use_keyword==True):
+        articles = crawling.crawl_articles(keyword="춘천 "+store_info['name'], max_count=5)
+        articles = random.sample(articles, k=3)
+
+    if use_info:
+        information_chain = information_extractor.extractor_information(articles=articles)
+        generator_input["information"] = information_chain
+
+
+    if use_keyword:
+        keyword_chain = keyword_extractor.extractor_keywords(articles=articles, max_items=max_items)
+        generator_input["keywords"] = keyword_chain
+
+    # use_info와 use_keyword 파라미터 전달
+    generator_chain = generator.generator_article(
+        use_info=use_info,
+        use_keyword=use_keyword
+    )
+
+    # 생성 결과 반환
+    return generator_chain.invoke(generator_input).content
