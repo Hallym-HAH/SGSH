@@ -69,10 +69,10 @@ export default function ManageNavBar() {
                   <Link className="font-bold" href="/manage/order">주문 관리</Link>
                 </li>
                 <li className="text-black">
-                  <Link className="font-bold" href="/manage/sales">홍보글 생성</Link>
+                  <Link className="font-bold" href="/manage/sales">매출 관리</Link>
                 </li>
                 <li className="text-black">
-                  <Link className="font-bold" href="/manage/calc">매출 계산기</Link>
+                  <Link className="font-bold" href="/manage/sales">홍보글 생성</Link>
                 </li>
               </ul>
             </div>
