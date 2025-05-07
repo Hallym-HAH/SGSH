@@ -30,6 +30,7 @@ async def realtime_generation(
         time: str,
         number: str,
         description: str,
+        blogs: str = None,
         platform: str = "인스타그램",
         use_info: bool = False,
         use_keyword: bool = False
@@ -44,7 +45,7 @@ async def realtime_generation(
             'description': description
         }
 
-        generated_content = main(store_info=store_info, platform=platform, max_items=10, use_info=use_info, use_keyword=use_keyword)
+        generated_content = main(store_info=store_info, platform=platform, max_items=10, use_info=use_info, use_keyword=use_keyword, blogs=blogs)
 
         return {
             "generated_content": generated_content
@@ -56,7 +57,7 @@ async def realtime_generation(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def main(store_info, platform="인스타그램", max_items=10, use_info=False, use_keyword=False):
+def main(store_info, platform="인스타그램", max_items=10, use_info=False, use_keyword=False, blogs=None):
 
     articles = []
     generator_input = {
@@ -69,8 +70,7 @@ def main(store_info, platform="인스타그램", max_items=10, use_info=False, u
     }
 
     if (use_info==True or use_keyword==True):
-        articles = crawling.crawl_articles(keyword="춘천 "+store_info['name'], max_count=5)
-        articles = random.sample(articles, k=3)
+        articles = crawling.crawl_articles(keyword=store_info['name'], max_count=5, blogs=blogs)
 
     if use_info:
         information_chain = information_extractor.extractor_information(articles=articles)
