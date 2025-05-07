@@ -23,10 +23,12 @@ class MenuCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
+              // borderRadius: BorderRadius.only(
+              //   topLeft: Radius.circular(12),
+              //   topRight: Radius.circular(12),
+              // ),
+              borderRadius: BorderRadius.circular(12),
+
               child: Image.network(
                 menu.image,
                 width: (MediaQuery.of(context).size.width * 0.75 - 30) / 4,
@@ -37,7 +39,13 @@ class MenuCard extends StatelessWidget {
                   return Center(child: CircularProgressIndicator());
                 },
                 errorBuilder: (context, error, stackTrace) {
-                  return Center(child: Icon(Icons.error, color: Colors.red));
+                  return Center(
+                    child: Icon(
+                      Icons.error,
+                      color: Colors.red,
+                      size: (MediaQuery.of(context).size.width * 0.75 - 40) / 4,
+                    ),
+                  );
                 },
               ),
             ),
