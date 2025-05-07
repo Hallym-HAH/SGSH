@@ -4,6 +4,7 @@ class menu_data {
   final String name;
   final String description;
   final String image;
+  final int category;
 
   menu_data({
     required this.id,
@@ -11,6 +12,7 @@ class menu_data {
     required this.name,
     required this.description,
     required this.image,
+    required this.category,
   });
 
   // 🔥 Supabase에서 가져온 `Map<String, dynamic>` 데이터를 `business_data` 객체로 변환
@@ -21,6 +23,7 @@ class menu_data {
       name: data["name"] ?? "이름 없음",
       description: data["description"] ?? "설명 없음",
       image: data["image"] ?? "이미지 없음",
+      category: data["category"] ?? 0,
     );
   }
 }
