@@ -72,7 +72,6 @@ export const chartData3 = (formattedDate, orders) => ({
     options: {
         chart: { id: "basic-bar", type: 'line', toolbar: { show: false }, zoom: { enabled: false, allowMouseWheelZoom: false }, },
         xaxis: { categories: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] },
-        yaxis: { min: 0, },
         yaxis: {
             labels: { formatter: function (value) { return Math.round(value); } },
             min: 0, max: Math.max(...Object.values(orders.orderByTime)), tickAmount: Math.max(...Object.values(orders.orderByTime)) >= 5 ? 5 : Math.max(...Object.values(orders.orderByTime)),

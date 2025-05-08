@@ -97,8 +97,8 @@ export default function SalesDaily() {
                     <div className="flex flex-wrap gap-x-20">
                         <div className="flex flex-col">
                             <Chart
-                                key={isLine ? 'line' : 'bar'}
-                                type={isLine ? "line" : "bar"}
+                                key={isLine ? 'area' : 'bar'}
+                                type={isLine ? "area" : "bar"}
                                 options={chartData(formattedDate, orders).options}
                                 series={chartData(formattedDate, orders).series}
                                 width="400" />
