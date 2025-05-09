@@ -8,7 +8,6 @@ export default function ManageNavBar() {
   const [navbar, setNavbar] = useState(false);
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  // let router = useRouter()
 
   const [userData, setUserData] = useState({
     email: "",
@@ -23,19 +22,14 @@ export default function ManageNavBar() {
       user && setIsLoggedIn(true)
 
       if (user) {
-
         const { data } = await supabaseClient.from('profile_data').select(`*`).eq('id', user.id).single();
-
         setUserData({
           email: data.email
         })
-
         var b_id = data.b_id;
-
         if (data.email == null || data.email.length == 0)
-          router.replace('/login')
-
-        const { data: b_data } = await supabaseClient.from('business_data').select("*").eq('id', 1).single();
+          window.location.reload();
+        const { data: b_data } = await supabaseClient.from('business_data').select("*").eq('id', b_id).single();
         setBName(b_data.name);
       }
     }
@@ -46,7 +40,9 @@ export default function ManageNavBar() {
   async function signOut() {
     const { error } = await supabaseClient.auth.signOut()
     setIsLoggedIn(false)
-    // router.replace('/')
+    if (!error) {
+      window.location.reload();
+    }
   }
   async function signInWithKakao() {
     const { data, error } = await supabaseClient.auth.signInWithOAuth({
@@ -130,6 +126,9 @@ export default function ManageNavBar() {
               </li>
               <li className="text-black">
                 <Link className="font-bold" href="/manage/order">주문 관리</Link>
+              </li>
+              <li className="text-black">
+                <Link className="font-bold" href="/manage/reserve">예약 관리</Link>
               </li>
               <li className="text-black">
                 <Link className="font-bold" href="/manage/sales">매출 관리</Link>
