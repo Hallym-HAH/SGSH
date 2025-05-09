@@ -288,7 +288,7 @@ export default function ManageMenu() {
 
             {
                 showModal ?
-                    <div className="w-full h-screen bg-black/75 fixed top-0 z-40">
+                    <div className="w-full h-screen bg-black/75 fixed top-0 z-40 right-0">
                         <div tabIndex={-1} aria-hidden="true" className="flex items-center justify-center pb-20 w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] md:h-full">
                             <div className="relative w-full h-auto max-w-2xl">
                                 <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
@@ -326,7 +326,7 @@ export default function ManageMenu() {
 
             {
                 showEditModal ?
-                    <div className="w-full h-screen bg-black/75 fixed top-0 z-40">
+                    <div className="w-full h-screen bg-black/75 fixed top-0 z-40 right-0">
                         <div tabIndex={-1} aria-hidden="true" className="flex items-center justify-center w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] md:h-full">
                             <div className="relative w-full h-auto max-w-2xl">
                                 <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
