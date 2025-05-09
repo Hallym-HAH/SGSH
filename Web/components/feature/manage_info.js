@@ -5,7 +5,9 @@ import { useEffect, useState, useRef } from "react";
 
 export default function ManageInfo() {
     const photoInput = useRef(null);
-
+    const [userData, setUserData] = useState({
+        b_id: 0,
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [image, setImage] = useState(null);
     const [isImageChanged, setIsImageChanged] = useState(false);
@@ -22,17 +24,27 @@ export default function ManageInfo() {
 
     useEffect(() => {
         const fetchMenus = async () => {
-            const { data } = await supabaseClient.from('business_data').select("*").eq('id', 1);
-            setBusiness(data)
-            setUpdateBusiness({
-                image: data[0].image,
-                name: data[0].name,
-                address: data[0].address,
-                time: data[0].time,
-                description: data[0].description
-            })
-            setPhotoToAddList(data[0].image);
-            setIsLoading(false)
+            const { data: { user } } = await supabaseClient.auth.getUser()
+            if (user) {
+                const { data: u_data } = await supabaseClient.from('profile_data').select(`*`).eq('id', user.id).single();
+                setUserData({
+                    b_id: u_data.b_id
+                })
+                var b_id = u_data.b_id;
+
+                const { data } = await supabaseClient.from('business_data').select("*").eq('id', b_id);
+                setBusiness(data)
+                setUpdateBusiness({
+                    image: data[0].image,
+                    name: data[0].name,
+                    address: data[0].address,
+                    time: data[0].time,
+                    description: data[0].description
+                })
+                setPhotoToAddList(data[0].image);
+                setIsLoading(false)
+            }
+
         }
         fetchMenus()
     }, []);
@@ -42,7 +54,7 @@ export default function ManageInfo() {
 
 
         if (image != null) {
-            const { data: uploadImage, error: uploadImageError } = await supabaseClient.storage.from("images").upload("menu_images/" + String(1) + "/main/" + encodeFilename(image?.name), image);
+            const { data: uploadImage, error: uploadImageError } = await supabaseClient.storage.from("images").upload("menu_images/" + String(userData.b_id) + "/main/" + encodeFilename(image?.name), image);
             if (uploadImage) {
                 // console.log("uploadImage");
             } else if (uploadImageError) {
@@ -61,8 +73,7 @@ export default function ManageInfo() {
                 time: updateBusiness.time,
                 description: updateBusiness.description,
             })
-            .eq("id", 1);
-
+            .eq("id", userData.b_id);
         if (data) {
         }
 
@@ -81,14 +92,14 @@ export default function ManageInfo() {
                 setIsLoading(false)
             })();
         }
-
+        // window.location.reload();
     }
 
 
     const handleInputImageChange = (e) => {
         if (e.target.files != null) {
             setImage(e.target.files[0]);
-            updateBusiness.image = "https://cytktlrbanxiswqurqth.supabase.co/storage/v1/object/public/images/menu_images/" + String(1) + "/main/" + encodeFilename(e.target.files[0].name);
+            updateBusiness.image = "https://cytktlrbanxiswqurqth.supabase.co/storage/v1/object/public/images/menu_images/" + String(userData.b_id) + "/main/" + encodeFilename(e.target.files[0].name);
             business[0].image = updateBusiness.image;
             setIsImageChanged(true);
 
