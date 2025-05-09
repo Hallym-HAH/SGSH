@@ -541,157 +541,152 @@ export default function ThumbnailGenerator() {
 
             <Script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" strategy="beforeInteractive" />
 
-            <div className="w-full md:ml-64">
-                <ManageNavBar />
-                <div className="p-4">
-                    <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
-                        <h2>홍보글 생성 페이지</h2>
 
-                        <div className="container mx-auto px-4 py-8 max-w-6xl">
-                            <h1 className="text-4xl font-bold text-center mb-8 text-indigo-700"></h1>
+            <div className="p-4">
+                <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
+                    <h2>홍보글 생성 페이지</h2>
 
-                            <div className="flex flex-col md:flex-row bg-white rounded-xl shadow-lg overflow-hidden h-full">
-                                {/* 왼쪽 패널 : 설정들 */}
-                                <div
-                                    className={`${currentStep === 5 ? 'w-full' : 'w-full md:w-1/2'} p-6 md:border-r border-gray-200 overflow-y-auto`}>
-                                    <h2 className="text-2xl font-semibold mb-6 text-gray-800">설정</h2>
+                    <div className="container mx-auto px-4 py-8 max-w-6xl">
+                        <h1 className="text-4xl font-bold text-center mb-8 text-indigo-700"></h1>
 
-                                    {/* 단계 표시 */}
-                                    <div className="flex mb-6">
-                                        {[1, 2, 3, 4, 5].map(step => (
-                                            <div
-                                                key={step}
-                                                className={`w-1/4 h-2 mx-1 rounded ${currentStep >= step ? 'bg-indigo-500' : 'bg-gray-200'}`}
-                                            />
-                                        ))}
-                                    </div>
+                        <div className="flex flex-col md:flex-row bg-white rounded-xl shadow-lg overflow-hidden h-full">
+                            {/* 왼쪽 패널 : 설정들 */}
+                            <div
+                                className={`${currentStep === 5 ? 'w-full' : 'w-full md:w-1/2'} p-6 md:border-r border-gray-200 overflow-y-auto`}>
+                                <h2 className="text-2xl font-semibold mb-6 text-gray-800">설정</h2>
 
-                                    {/* 단계별 컴포넌트 */}
-                                    <AnimatePresence mode="wait">
-                                        {currentStep === 1 && (
-                                            <ImageUploadStep
-                                                key="step1"
-                                                image={image}
-                                                handleImageUpload={handleImageUpload}
-                                            />
-                                        )}
-
-                                        {currentStep === 2 && (
-                                            <TextInputStep
-                                                key="step2"
-                                                primaryText={primaryText}
-                                                secondaryText={secondaryText}
-                                                handlePrimaryTextInput={handlePrimaryTextInput}
-                                                handleSecondaryTextInput={handleSecondaryTextInput}
-                                            />
-                                        )}
-
-                                        {currentStep === 3 && (
-                                            <FontSettingsStep
-                                                key="step3"
-                                                textStyle={textStyle}
-                                                primaryText={primaryText}
-                                                secondaryText={secondaryText}
-                                                handleFontSizeChange={handleFontSizeChange}
-                                                handleFontColorChange={handleFontColorChange}
-                                                handleCommonStyleChange={handleCommonStyleChange}
-                                                handleOutlinePropertyChange={handleOutlinePropertyChange}
-                                                notoSansKr={notoSansKr}
-                                                nanumGothic={nanumGothic}
-                                                ibmPlexSansKr={ibmPlexSansKr}
-                                                blackHanSans={blackHanSans}
-                                                jua={jua}
-                                            />
-                                        )}
-
-                                        {currentStep === 4 && (
-                                            <PositionSettingsStep
-                                                key="step4"
-                                                primaryText={primaryText}
-                                                handlePositionChange={handlePositionChange}
-                                                fixedPositions={fixedPositions}
-                                            />
-                                        )}
-
-                                        {currentStep === 5 && (
-                                            <ResultsPage
-                                                generatedText={generatedText}
-                                                useInfo={useInfo}
-                                                setUseInfo={setUseInfo}
-                                                useKeyword={useKeyword}
-                                                setUseKeyword={setUseKeyword}
-                                                blogPosts={blogPosts}          // 이 속성 추가
-                                                selectedBlogs={selectedBlogs}  // 이 속성 추가
-                                                setSelectedBlogs={setSelectedBlogs}  // 이 속성 추가
-                                            />
-                                        )}
-
-
-
-                                    </AnimatePresence>
-                                    {/* 네비게이션 버튼 */}
-
-                                    {business[0] != undefined &&
-                                        <StepNavigation
-                                            currentStep={currentStep}
-                                            totalSteps={5}
-                                            onNext={nextStep}
-                                            onPrev={prevStep}
-                                            onComplete={downloadThumbnail}
-                                            isDownloadEnabled={isDownloadEnabled}
-                                            setGeneratedText={setGeneratedText}
-                                            isGenerating={isGenerating}
-                                            setIsGenerating={setIsGenerating}
-                                            useInfo={useInfo}
-                                            useKeyword={useKeyword}
-                                            selectedBlogs={selectedBlogs}
-                                            b_name={business[0].name}
-                                            b_address={business[0].address}
-                                            b_time={business[0].time}
-                                            b_number={business[0].number}
-                                            b_description={business[0].description}
+                                {/* 단계 표시 */}
+                                <div className="flex mb-6">
+                                    {[1, 2, 3, 4, 5].map(step => (
+                                        <div
+                                            key={step}
+                                            className={`w-1/4 h-2 mx-1 rounded ${currentStep >= step ? 'bg-indigo-500' : 'bg-gray-200'}`}
                                         />
-                                    }
-
-
+                                    ))}
                                 </div>
 
-                                {/* 오른쪽 패널: 미리보기 - 5단계에서는 숨김 */}
-                                {currentStep !== 5 && (
-                                    <div className="w-full md:w-1/2 p-6 bg-gray-50">
+                                {/* 단계별 컴포넌트 */}
+                                <AnimatePresence mode="wait">
+                                    {currentStep === 1 && (
+                                        <ImageUploadStep
+                                            key="step1"
+                                            image={image}
+                                            handleImageUpload={handleImageUpload}
+                                        />
+                                    )}
+
+                                    {currentStep === 2 && (
+                                        <TextInputStep
+                                            key="step2"
+                                            primaryText={primaryText}
+                                            secondaryText={secondaryText}
+                                            handlePrimaryTextInput={handlePrimaryTextInput}
+                                            handleSecondaryTextInput={handleSecondaryTextInput}
+                                        />
+                                    )}
+
+                                    {currentStep === 3 && (
+                                        <FontSettingsStep
+                                            key="step3"
+                                            textStyle={textStyle}
+                                            primaryText={primaryText}
+                                            secondaryText={secondaryText}
+                                            handleFontSizeChange={handleFontSizeChange}
+                                            handleFontColorChange={handleFontColorChange}
+                                            handleCommonStyleChange={handleCommonStyleChange}
+                                            handleOutlinePropertyChange={handleOutlinePropertyChange}
+                                            notoSansKr={notoSansKr}
+                                            nanumGothic={nanumGothic}
+                                            ibmPlexSansKr={ibmPlexSansKr}
+                                            blackHanSans={blackHanSans}
+                                            jua={jua}
+                                        />
+                                    )}
+
+                                    {currentStep === 4 && (
+                                        <PositionSettingsStep
+                                            key="step4"
+                                            primaryText={primaryText}
+                                            handlePositionChange={handlePositionChange}
+                                            fixedPositions={fixedPositions}
+                                        />
+                                    )}
+
+                                    {currentStep === 5 && (
+                                        <ResultsPage
+                                            generatedText={generatedText}
+                                            useInfo={useInfo}
+                                            setUseInfo={setUseInfo}
+                                            useKeyword={useKeyword}
+                                            setUseKeyword={setUseKeyword}
+                                            blogPosts={blogPosts}          // 이 속성 추가
+                                            selectedBlogs={selectedBlogs}  // 이 속성 추가
+                                            setSelectedBlogs={setSelectedBlogs}  // 이 속성 추가
+                                        />
+                                    )}
+
+
+
+                                </AnimatePresence>
+                                {/* 네비게이션 버튼 */}
+
+                                {business[0] != undefined &&
+                                    <StepNavigation
+                                        currentStep={currentStep}
+                                        totalSteps={5}
+                                        onNext={nextStep}
+                                        onPrev={prevStep}
+                                        onComplete={downloadThumbnail}
+                                        isDownloadEnabled={isDownloadEnabled}
+                                        setGeneratedText={setGeneratedText}
+                                        isGenerating={isGenerating}
+                                        setIsGenerating={setIsGenerating}
+                                        useInfo={useInfo}
+                                        useKeyword={useKeyword}
+                                        selectedBlogs={selectedBlogs}
+                                        b_name={business[0].name}
+                                        b_address={business[0].address}
+                                        b_time={business[0].time}
+                                        b_number={business[0].number}
+                                        b_description={business[0].description}
+                                    />
+                                }
+
+
+                            </div>
+
+                            {/* 오른쪽 패널: 미리보기 - 5단계에서는 숨김 */}
+                            {currentStep !== 5 && (
+                                <div className="w-full md:w-1/2 p-6 bg-gray-50">
+                                    <div
+                                        ref={previewPanelRef}
+                                        className="sticky top-5 max-h-[90vh] md:static md:max-h-full"
+                                    >
+                                        <h2 className="text-2xl font-semibold mb-6 text-gray-800">미리보기</h2>
                                         <div
-                                            ref={previewPanelRef}
-                                            className="sticky top-5 max-h-[90vh] md:static md:max-h-full"
-                                        >
-                                            <h2 className="text-2xl font-semibold mb-6 text-gray-800">미리보기</h2>
+                                            className="bg-gray-800 rounded-xl p-2 shadow-inner flex items-center justify-center">
                                             <div
-                                                className="bg-gray-800 rounded-xl p-2 shadow-inner flex items-center justify-center">
-                                                <div
-                                                    className="relative w-full max-w-md mx-auto overflow-hidden rounded-lg shadow-lg"
-                                                    style={{ aspectRatio: '4/5' }}>
-                                                    <div ref={thumbnailPreviewRef}
-                                                        className="relative overflow-hidden w-full h-full">
-                                                        <img
-                                                            src={image.src}
-                                                            alt="썸네일 이미지"
-                                                            className="absolute top-0 left-0 w-full h-full object-cover"
-                                                        />
-                                                        <div style={getTextStyle(false)}>{primaryText.content}</div>
-                                                        <div style={getTextStyle(true)}>{secondaryText.content}</div>
-                                                    </div>
+                                                className="relative w-full max-w-md mx-auto overflow-hidden rounded-lg shadow-lg"
+                                                style={{ aspectRatio: '4/5' }}>
+                                                <div ref={thumbnailPreviewRef}
+                                                    className="relative overflow-hidden w-full h-full">
+                                                    <img
+                                                        src={image.src}
+                                                        alt="썸네일 이미지"
+                                                        className="absolute top-0 left-0 w-full h-full object-cover"
+                                                    />
+                                                    <div style={getTextStyle(false)}>{primaryText.content}</div>
+                                                    <div style={getTextStyle(true)}>{secondaryText.content}</div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
-
-
-
         </Manage >
     );
 }
