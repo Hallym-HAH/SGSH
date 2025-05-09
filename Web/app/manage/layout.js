@@ -63,7 +63,7 @@ export default function ManageLayout({ children }) {
                             </div>
                         </div>
                     </nav>
-                    {isLoggedIn && userData.b_id == 0 ?
+                    {isLoggedIn && (userData.b_id == 0 || !userData.b_id) ?
                         <div className="flex flex-col w-full h-200 justify-center items-center gap-y-10">
                             <p className="text-xl font-bold">권한이 없습니다.</p>
                             <a className="font-bold" onClick={signOut}>로그아웃</a>
