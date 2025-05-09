@@ -1,6 +1,9 @@
-import 'package:app/data/dummy_article.dart';
+import 'package:app/models/article.dart';
 import 'package:app/pages/imageviewpage.dart';
+import 'package:app/services/bookmark_service.dart';
 import 'package:app/widgets/menudetail_modal.dart';
+import 'package:app/widgets/reservation_bottom_sheet.dart';
+import 'package:app/widgets/store_bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,23 +26,58 @@ class StoreDetailPage extends StatefulWidget {
 class _StoreDetailPageState extends State<StoreDetailPage>
     with SingleTickerProviderStateMixin {
   List<menu_data> menuList = [];
+  List<article_data> storeArticles = []; // 🔍 스토어 전용 아티클 목록
+
   late Future<SharedPreferences> prefsFuture;
   final supabase = Supabase.instance.client;
   late TabController _tabController;
   bool isBookmarked = false;
   bool showTitle = false;
+static const String bookmarkKey = 'bookmarkedStores';
 
-  void toggleBookmark() {
-    setState(() {
-      isBookmarked = !isBookmarked;
-    });
 
-    print(
-      isBookmarked
-          ? "🔖 북마크 추가됨: ${widget.store.name}"
-          : "❌ 북마크 해제됨: ${widget.store.name}",
-    );
+  void fetchStoreArticles() async {
+    try {
+      final response = await supabase
+          .from('article_data')
+          .select()
+          .eq('b_id', widget.store.id) // store.id와 연결
+          .eq('type', 1) // type == 1
+          .order('id', ascending: false); // 원하는 정렬 방식 (ex. 최신순)
+
+      if (response.isEmpty) return;
+
+      setState(() {
+        storeArticles =
+            response
+                .map<article_data>((item) => article_data.fromMap(item))
+                .toList();
+      });
+    } catch (e) {
+      print("❌ [article_data] 불러오기 실패: $e");
+    }
   }
+
+  void toggleBookmark() async {
+  await BookmarkService.toggleBookmark(widget.store.id.toString());
+  await checkBookmarkStatus(); // 북마크 상태를 정확히 다시 읽어옴
+
+  print(
+    isBookmarked
+        ? "🔖 북마크 추가됨: ${widget.store.name}"
+        : "❌ 북마크 해제됨: ${widget.store.name}",
+  );
+}
+
+Future<void> checkBookmarkStatus() async {
+  final isMarked = await BookmarkService.isBookmarked(widget.store.id.toString());
+  setState(() {
+    isBookmarked = isMarked;
+  });
+}
+
+
+
 
   void shareStore() {
     showModalBottomSheet(
@@ -100,22 +138,30 @@ class _StoreDetailPageState extends State<StoreDetailPage>
 
   final ScrollController _scrollController = ScrollController();
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(() {
-      if (_scrollController.offset > 150 && !showTitle) {
-        setState(() => showTitle = true);
-      } else if (_scrollController.offset <= 150 && showTitle) {
-        setState(() => showTitle = false);
-      }
-    });
+ @override
+void initState() {
+  super.initState();
+  _tabController = TabController(length: 2, vsync: this);
+  prefsFuture = SharedPreferences.getInstance();
 
-    _tabController = TabController(length: 2, vsync: this);
-    prefsFuture = SharedPreferences.getInstance();
-    fetchMenuData();
-    saveToRecentStores(widget.store.name);
-  }
+  _scrollController.addListener(() {
+    if (_scrollController.offset > 150 && !showTitle) {
+      setState(() => showTitle = true);
+    } else if (_scrollController.offset <= 150 && showTitle) {
+      setState(() => showTitle = false);
+    }
+  });
+
+  fetchMenuData();
+  fetchStoreArticles(); // ✅ 여기!
+  saveToRecentStores(widget.store.name);
+    checkBookmarkStatus(); // ✅ 여기!
+
+}
+
+
+
+
 
   void saveToRecentStores(String storeName) async {
     final prefs = await prefsFuture;
@@ -174,127 +220,149 @@ class _StoreDetailPageState extends State<StoreDetailPage>
     );
   }
 
- @override
-Widget build(BuildContext context) {
-  return AnnotatedRegion<SystemUiOverlayStyle>(
-    value: SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // ✅ 배경 직접 덮을 거라서 transparent
-      statusBarIconBrightness: Brightness.dark, // ✅ 검정 아이콘
-      statusBarBrightness: Brightness.light, // ✅ iOS용
-    ),
-    child: Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          NestedScrollView(
-            controller: _scrollController,
-            headerSliverBuilder: (context, innerBoxIsScrolled) {
-              return [
-                SliverAppBar(
-                  pinned: true,
-                  expandedHeight: 200,
-                  backgroundColor: Colors.white,
-                  scrolledUnderElevation: 0,
-                  elevation: 0,
-                  leading: Padding(
-                    padding: EdgeInsets.only(left: 16),
-                    child: _circleIconButton(
-                      icon: Icons.arrow_back_ios_new,
-                      onTap: () => Navigator.pop(context),
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent, // ✅ 배경 직접 덮을 거라서 transparent
+        statusBarIconBrightness: Brightness.dark, // ✅ 검정 아이콘
+        statusBarBrightness: Brightness.light, // ✅ iOS용
+      ),
+      child: Scaffold(
+        bottomNavigationBar: StoreBottomBar(
+          bookmarkCount: 5012,
+          onReservePressed: () {
+            // 예약하기 눌렀을 때
+            showReservationBottomSheet(context);
+          },
+          onCallPressed: () {
+            // 전화 버튼 눌렀을 때
+            print("전화 클릭!");
+          },
+          onBookmarkPressed: () {},
+        ),
+        backgroundColor: Colors.white,
+        body: Stack(
+          children: [
+            NestedScrollView(
+              controller: _scrollController,
+              headerSliverBuilder: (context, innerBoxIsScrolled) {
+                return [
+                  SliverAppBar(
+                    pinned: true,
+                    expandedHeight: 200,
+                    backgroundColor: Colors.white,
+                    scrolledUnderElevation: 0,
+                    elevation: 0,
+                    leading: Padding(
+                      padding: EdgeInsets.only(left: 16),
+                      child: _circleIconButton(
+                        icon: Icons.arrow_back_ios_new,
+                        onTap: () => Navigator.pop(context),
+                      ),
                     ),
-                  ),
-                  actions: [
-                    _circleIconButton(
-                      icon: Icons.home,
-                      onTap: () {
-                        Navigator.popUntil(context, (route) => route.isFirst);
-                      },
-                    ),
-                    _circleIconButton(
-                      icon: isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                      onTap: toggleBookmark,
-                    ),
-                    _circleIconButton(icon: Icons.share, onTap: shareStore),
-                    SizedBox(width: 12),
-                  ],
-                  title: showTitle
-                      ? Text(
-                          widget.store.name,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22,
-                          ),
-                        )
-                      : null,
-                  flexibleSpace: FlexibleSpaceBar(
-                    collapseMode: CollapseMode.pin,
-                    background: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ImageViewPage(imageUrl: widget.store.image),
-                          ),
-                        );
-                      },
-                      child: Image.network(
-                        widget.store.image,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey[300],
-                          child: Icon(Icons.image_not_supported, size: 50),
+                    actions: [
+                      _circleIconButton(
+                        icon: Icons.home,
+                        onTap: () {
+                          Navigator.popUntil(context, (route) => route.isFirst);
+                        },
+                      ),
+                      _circleIconButton(
+                        icon:
+                            isBookmarked
+                                ? Icons.bookmark
+                                : Icons.bookmark_border,
+                        onTap: toggleBookmark,
+                      ),
+                      _circleIconButton(icon: Icons.share, onTap: shareStore),
+                      SizedBox(width: 12),
+                    ],
+                    title:
+                        showTitle
+                            ? Text(
+                              widget.store.name,
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 22,
+                              ),
+                            )
+                            : null,
+                    flexibleSpace: FlexibleSpaceBar(
+                      collapseMode: CollapseMode.pin,
+                      background: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => ImageViewPage(
+                                    imageUrl: widget.store.image,
+                                  ),
+                            ),
+                          );
+                        },
+                        child: Image.network(
+                          widget.store.image,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder:
+                              (_, __, ___) => Container(
+                                color: Colors.grey[300],
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  size: 50,
+                                ),
+                              ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                SliverToBoxAdapter(child: buildStoreHeader()),
-                SliverToBoxAdapter(
-                  child: Container(height: 8, color: Colors.grey[200]),
-                ),
-                SliverPersistentHeader(
-                  delegate: SliverTabBarDelegate(
-                    TabBar(
-                      controller: _tabController,
-                      labelColor: Colors.black,
-                      unselectedLabelColor: Colors.black54,
-                      indicatorColor: Colors.black,
-                      indicatorWeight: 2,
-                      tabs: [Tab(text: '홈'), Tab(text: '메뉴')],
-                    ),
+                  SliverToBoxAdapter(child: buildStoreHeader()),
+                  SliverToBoxAdapter(
+                    child: Container(height: 8, color: Colors.grey[200]),
                   ),
-                  pinned: true,
-                ),
-              ];
-            },
-            body: TabBarView(
-              controller: _tabController,
-              children: [buildHomeTab(), buildMenuTab(menuList)],
+                  SliverPersistentHeader(
+                    delegate: SliverTabBarDelegate(
+                      TabBar(
+                        controller: _tabController,
+                        labelColor: Colors.black,
+                        unselectedLabelColor: Colors.black54,
+                        indicatorColor: Colors.black,
+                        indicatorWeight: 2,
+                        tabs: [Tab(text: '홈'), Tab(text: '메뉴')],
+                      ),
+                    ),
+                    pinned: true,
+                  ),
+                ];
+              },
+              body: TabBarView(
+                controller: _tabController,
+                children: [buildHomeTab(), buildMenuTab(menuList)],
+              ),
             ),
-          ),
 
-          // ✅ 상태바 영역만 흰색으로 덮기
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: MediaQuery.of(context).padding.top, // 상태바 높이만큼
-              color: Colors.white, // 너가 원하는 흰색
+            // ✅ 상태바 영역만 흰색으로 덮기
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: MediaQuery.of(context).padding.top, // 상태바 높이만큼
+                color: Colors.white, // 너가 원하는 흰색
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget buildStoreHeader() {
     return Padding(
-      padding: EdgeInsets.only(right: 16.0,left: 16.0, top: 16.0,bottom: 5),
+      padding: EdgeInsets.only(right: 16.0, left: 16.0, top: 16.0, bottom: 5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -413,121 +481,123 @@ Widget build(BuildContext context) {
   }
 
   Widget buildHomeTab() {
-    return ListView.builder(
-      padding: EdgeInsets.all(16),
-      itemCount: dummyArticles.length,
-      itemBuilder: (context, index) {
-        final article = dummyArticles[index];
-        return Container(
-          margin: EdgeInsets.only(bottom: 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 10,
-                offset: Offset(0, 4),
-              ),
-            ],
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /// 🔔 Title with icon
-                Row(
-                  children: [
-                    Icon(Icons.campaign, color: Colors.orange, size: 20),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        article.title,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: 12),
-
-                /// 📝 Content
-                Text(
-                  article.content,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    height: 1.5,
-                  ),
-                ),
-
-                SizedBox(height: 16),
-
-                /// 🧑‍💼 Author & 🕒 Time
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.person, size: 14, color: Colors.grey),
-                        SizedBox(width: 4),
-                        Text(
-                          article.author,
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Icon(Icons.access_time, size: 14, color: Colors.grey),
-                        SizedBox(width: 4),
-                        Text(
-                          article.time,
-                          style: TextStyle(fontSize: 12, color: Colors.black45),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget buildMenuTab(List<menu_data> menus) {
-  if (menus.isEmpty) {
+  if (storeArticles.isEmpty) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40),
-        child: Text(
-          '메뉴가 등록되지 않았습니다.',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
-        ),
+        padding: const EdgeInsets.all(32),
+        child: Text("이 가게에 등록된 아티클이 없습니다."),
       ),
     );
   }
 
-  return ListView.separated(
-    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-    itemCount: menus.length,
-    shrinkWrap: true, // ✅ 자식들 크기만큼만 렌더링
-    physics: NeverScrollableScrollPhysics(), // ✅ NestedScrollView와의 스크롤 충돌 방지
-    separatorBuilder: (_, __) => SizedBox(height: 12),
+  return ListView.builder(
+    padding: EdgeInsets.all(16),
+    itemCount: storeArticles.length,
     itemBuilder: (context, index) {
-      return _buildMenuCard(menus[index]);
+      final article = storeArticles[index];
+      return Container(
+        margin: EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.campaign, color: Colors.orange, size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      article.title,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12),
+              Text(
+                article.content,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.person, size: 14, color: Colors.grey),
+                      SizedBox(width: 4),
+                      Text(
+                        article.author,
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.access_time, size: 14, color: Colors.grey),
+                      SizedBox(width: 4),
+                      Text(
+                        article.time,
+                        style: TextStyle(fontSize: 12, color: Colors.black45),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
     },
   );
 }
 
+
+  Widget buildMenuTab(List<menu_data> menus) {
+    if (menus.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40),
+          child: Text(
+            '메뉴가 등록되지 않았습니다.',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      itemCount: menus.length,
+      shrinkWrap: true, // ✅ 자식들 크기만큼만 렌더링
+      physics: NeverScrollableScrollPhysics(), // ✅ NestedScrollView와의 스크롤 충돌 방지
+      separatorBuilder: (_, __) => SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        return _buildMenuCard(menus[index]);
+      },
+    );
+  }
 
   Widget _buildMenuCard(menu_data menu) {
     return GestureDetector(

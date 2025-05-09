@@ -15,13 +15,18 @@ export default function SalesDaily() {
     const mm = String(today.getMonth() + 1).padStart(2, '0'); // getMonth()는 0부터 시작
     const dd = String(today.getDate()).padStart(2, '0');
 
-    const formattedDate = `${yyyy}-${mm}-${dd}`;
+    const [formattedDate, setFormattedDate] = useState(`${yyyy}-${mm}-${dd}`);
 
     const formattedCurrentTime = `${yyyy}-${mm}-${dd} ${String(today.getHours()).padStart(2, '0')}`;  // "yyyy-mm-dd hh"
 
     useEffect(() => {
         const fetchOrders = async () => {
-            const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', 1).like('time', `%${formattedDate}%`).order("id", { ascending: false });
+            const { data } = await supabaseClient
+                .from('order_data')
+                .select("*")
+                .eq('b_id', 1)
+                .like('time', `%${formattedDate}%`)
+                .order("id", { ascending: false });
 
             const result = {};
             const orderByTime = {};
@@ -53,18 +58,25 @@ export default function SalesDaily() {
                 }
             });
 
+            // 오늘 날짜와 비교
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const isBeforeToday = formattedDate < todayStr;
+
+            // 현재 시간 구하기
+            const now = new Date();
+            const currentHour = now.getHours();
+
             // 8시부터 20시까지 강제 세팅
             const fullResult = {};
             const fullOrderByTime = {};
-            // 누적
             const cumulative = {};
             let runningTotal = 0;
             for (let hour = 8; hour <= 20; hour++) {
                 const hourStr = String(hour).padStart(2, '0');
                 const timeKey = `${formattedDate} ${hourStr}`;
 
-                // 현재 시간이 해당 시간대보다 이전이거나 같은 경우만 누적 매출을 구하고, 그 외에는 0을 설정
-                if (timeKey <= formattedCurrentTime) {
+                // 오늘 이전이면 전부, 오늘이면 현재 시간까지만
+                if (isBeforeToday || hour <= currentHour) {
                     fullResult[timeKey] = result[timeKey] || 0;
                     fullOrderByTime[timeKey] = orderByTime[timeKey] || 0;
                     runningTotal += result[timeKey] || 0;
@@ -72,20 +84,45 @@ export default function SalesDaily() {
                 } else {
                     fullResult[timeKey] = null;
                     fullOrderByTime[timeKey] = null;
-                    cumulative[timeKey] = null; // 현재 시간 이후에는 누적 매출을 0으로 설정
+                    cumulative[timeKey] = null;
                 }
             }
 
             setOrders({ orders: data, result: fullResult, cumulative, orderByTime: fullOrderByTime });
-            setIsLoading(false)
+            setIsLoading(false);
+        };
 
-        }
-        fetchOrders()
-    }, [])
+        fetchOrders();
+    }, [formattedDate]);
 
+
+
+    // 날짜를 하루 더하는 함수
+    const addOneDay = async () => {
+        const date = new Date(formattedDate);
+        date.setDate(date.getDate() + 1);
+        setFormattedDate(date.toISOString().slice(0, 10));
+    };
+
+    // 날짜를 하루 빼는 함수
+    const subtractOneDay = async () => {
+        const date = new Date(formattedDate);
+        date.setDate(date.getDate() - 1);
+        setFormattedDate(date.toISOString().slice(0, 10));
+    };
 
     return (
         <div className="flex flex-col" >
+            <div className="flex w-full justify-center gap-x-6">
+                <p className="font-bold text-xl" onClick={subtractOneDay}>&lt;</p>
+                <p className="font-bold text-xl">{formattedDate}</p>
+                {
+                    formattedDate == `${yyyy}-${mm}-${dd}` ?
+                        <p className="font-bold text-xl text-gray-300" >&gt;</p> :
+                        <p className="font-bold text-xl" onClick={addOneDay}>&gt;</p>
+                }
+
+            </div>
             <button className="w-35 text-black border rounded" onClick={() => { setIsLine(!isLine); console.log(orders); }}>Line / Bar 전환</button>
             {isLoading ?
                 <div className="flex flex-row mx-auto my-20 md:-my-20 h-screen justify-center md:items-center">
@@ -97,8 +134,8 @@ export default function SalesDaily() {
                     <div className="flex flex-wrap gap-x-20">
                         <div className="flex flex-col">
                             <Chart
-                                key={isLine ? 'line' : 'bar'}
-                                type={isLine ? "line" : "bar"}
+                                key={isLine ? 'area' : 'bar'}
+                                type={isLine ? "area" : "bar"}
                                 options={chartData(formattedDate, orders).options}
                                 series={chartData(formattedDate, orders).series}
                                 width="400" />

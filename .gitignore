@@ -9,7 +9,9 @@ App/ios/Pods/
 App/pubspec.lock
 App/.env
 App/ios/Runner/Info.plist
-
+App/.flutter-plugins
+App/.flutter-plugins-dependencies
+App/ios/build/ios
 
 # Next.js 관련 파일
 Web/.next/

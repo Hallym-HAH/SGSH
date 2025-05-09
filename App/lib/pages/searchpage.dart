@@ -1,49 +1,60 @@
-import 'package:app/widgets/store_card.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app/widgets/search_bar.dart' as custom; // 커스텀 SearchBar
 import 'package:app/models/business.dart';
 import 'package:app/pages/storedetail.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app/widgets/store_card.dart';
+import 'package:app/models/article.dart';
+import 'package:app/pages/articlepage.dart'; // 클릭 시 상세 페이지 이동
 
 class SearchPage extends StatefulWidget {
   @override
   _SearchPageState createState() => _SearchPageState();
 }
 
-//textcontroller
 class _SearchPageState extends State<SearchPage> {
-  final TextEditingController _searchController = TextEditingController();
   final supabase = Supabase.instance.client;
+  final TextEditingController _searchController = TextEditingController();
+
   List<business_data> storeList = [];
   List<business_data> filteredList = [];
   List<String> recentStores = [];
+  List<article_data> magazineArticles = [];
 
-  final List<String> popularSearches = [
-    "스시카이키",
-    "아르모니움",
-    "아오이바라",
-    "고청담 용산점",
-    "키츠 스키야키",
-    "블루메쯔 광화문점",
-    "도톤보리서울",
-    "드포레 와인다이닝 용산",
-    "야키토리 슈츠",
-    "종문",
-  ];
+  bool hasSearched = false;
 
   @override
   void initState() {
     super.initState();
     fetchStores();
+    fetchMagazineArticles(); // ← 추가
+
     loadRecentStores();
+  }
+
+  void fetchMagazineArticles() async {
+    try {
+      final response = await supabase
+          .from('article_data')
+          .select()
+          .eq('type', 4); // 타입 4만 가져오기
+
+      setState(() {
+        magazineArticles =
+            response.map((e) => article_data.fromMap(e)).toList();
+      });
+    } catch (e) {
+      print('❌ 매거진 로딩 실패: $e');
+    }
   }
 
   void fetchStores() async {
     try {
-      var response = await supabase
+      final response = await supabase
           .from("business_data")
           .select()
-          .order("id", ascending: true);
+          .order("id");
       setState(() {
         storeList =
             response
@@ -52,17 +63,25 @@ class _SearchPageState extends State<SearchPage> {
         filteredList = List.from(storeList);
       });
     } catch (e) {
-      print("❌ 오류 발생: $e");
+      print("❌ Supabase 오류: $e");
     }
   }
 
   void filterStores(String query) {
     setState(() {
-      filteredList =
-          storeList.where((store) {
-            return store.name.toLowerCase().contains(query.toLowerCase()) ||
-                store.address.toLowerCase().contains(query.toLowerCase());
-          }).toList();
+      if (query.trim().isEmpty) {
+        hasSearched = false;
+        filteredList = List.from(storeList); // 또는 []
+      } else {
+        hasSearched = true;
+        filteredList =
+            storeList.where((store) {
+              final name = store.name.toLowerCase();
+              final address = store.address.toLowerCase();
+              return name.contains(query.toLowerCase()) ||
+                  address.contains(query.toLowerCase());
+            }).toList();
+      }
     });
   }
 
@@ -78,135 +97,167 @@ class _SearchPageState extends State<SearchPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
-          '가게 검색',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        backgroundColor: Colors.white, // 항상 흰색 유지
+        elevation: 0.5,
+        centerTitle: false,
+        title: const Text(
+          '검색하기',
+          style: TextStyle(
+            fontSize: 20,
+            fontFamily: 'Pretendard',
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: IconThemeData(color: Colors.black),
+
+        foregroundColor: Colors.black, // 버튼색이 스크롤에 의해 바뀌지 않도록
+        surfaceTintColor: Colors.white, // 머티리얼 3 대응용 (앱바 배경 흐림 방지)
+        shadowColor: Colors.transparent, // 그림자 투명화(선택)
       ),
       body: Column(
         children: [
           Padding(
-            padding: EdgeInsets.all(12.0),
-            child: TextField(
-  controller: _searchController,
-  onSubmitted: (value) {
-    filterStores(value);  // 엔터 키 입력 시 검색 실행
-  },
-  decoration: InputDecoration(
-    prefixIcon: Icon(Icons.search, color: Colors.black54),
-    hintText: '검색어를 입력하세요...',
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-    filled: true,
-    fillColor: Colors.grey[200],
-  ),
-)
-
+            padding: const EdgeInsets.all(12.0),
+            child: custom.SearchBar(
+              controller: _searchController,
+              onSubmitted: (value) {
+                filterStores(value);
+                FocusScope.of(context).unfocus();
+              },
+              onChanged: filterStores,
+            ),
           ),
 
-          if (_searchController.text.isEmpty) ...[
-            if (recentStores.isNotEmpty) ...[
+          if (!hasSearched) ...[
+            // ✅ 매거진 아티클이 있으면 먼저 보여주기
+            if (magazineArticles.isNotEmpty) ...[
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12.0),
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '최근 본 가게',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    '추천 매거진',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                 ),
               ),
-              Container(
-                height: 40,
-                margin: EdgeInsets.symmetric(vertical: 8),
-                child: ListView(
+              SizedBox(
+                height: 200,
+                child: ListView.separated(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
-                  children:
-                      recentStores
-                          .map(
-                            (storeName) => Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8),
-                              child: ActionChip(
-                                backgroundColor: Colors.white,
-
-                                label: Text(storeName),
-                                onPressed: () {
-                                  final selectedStore = storeList.firstWhere(
-                                    (store) => store.name == storeName,
-                                  );
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => StoreDetailPage(
-                                            store: selectedStore,
-                                          ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          )
-                          .toList(),
+                  itemCount: magazineArticles.length,
+                  separatorBuilder: (_, __) => SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final article = magazineArticles[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ArticlePage(article: article),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 160,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          image: DecorationImage(
+                            image: NetworkImage(article.image ?? ''),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        alignment: Alignment.bottomLeft,
+                        padding: EdgeInsets.all(12),
+                        child: Text(
+                          article.title,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(blurRadius: 4, color: Colors.black),
+                            ],
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
+              const SizedBox(height: 16),
             ],
 
+            // ✅ 추천 해시태그는 항상 표시
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '실시간 인기 검색어',
+                  '추천 해시태그',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: popularSearches.length,
-                itemBuilder:
-                    (context, index) => ListTile(
-                      leading: Text(
-                        "${index + 1}",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 12.0),
+              child: Row(
+                children:
+                    ['#학생단골', '#춘천맛집', '#스시오마카세', '#강원도맛집', '#감자'].map((tag) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: () {
+                            _searchController.text = tag;
+                            filterStores(tag);
+                            FocusScope.of(context).unfocus();
+                          },
+                          child: Chip(
+                            label: Text(
+                              tag,
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              side: BorderSide(color: Colors.black12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
                         ),
-                      ),
-                      title: Text(popularSearches[index]),
-                      onTap: () {
-                        _searchController.text = popularSearches[index];
-                        filterStores(popularSearches[index]);
-                      },
-                    ),
+                      );
+                    }).toList(),
               ),
             ),
-          ] else
+          ],
+
+          if (hasSearched)
             Expanded(
               child:
                   filteredList.isEmpty
-                      ? Center(child: Text("검색 결과가 없습니다."))
+                      ? Center(child: Text('검색 결과가 없습니다.'))
                       : ListView.builder(
-                        padding: const EdgeInsets.all(12.0),
                         itemCount: filteredList.length,
                         itemBuilder: (context, index) {
+                          final store = filteredList[index];
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 12.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0,
+                              vertical: 6,
+                            ),
                             child: StoreCard(
-                              store: filteredList[index],
+                              store: store,
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder:
-                                        (context) => StoreDetailPage(
-                                          store: filteredList[index],
-                                        ),
+                                        (_) => StoreDetailPage(store: store),
                                   ),
                                 );
                               },

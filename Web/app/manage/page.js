@@ -1,7 +1,6 @@
 'use client'
 
 import ManageInfo from "@/components/feature/manage_info";
-import ManageSideBar from '@/components/feature/manage_sidebar';
 import { usePathname } from "next/navigation";
 
 export default function Manage({ children }) {
@@ -9,11 +8,12 @@ export default function Manage({ children }) {
     return (
         <>
             <div className="flex flex-row min-h-screen bg-[#f9fafb]">
-                <ManageSideBar />
-                {pathname == ("/manage") ?
-                    <ManageInfo />
-                    : null}
-                {children}
+                <div className="w-full">
+                    {pathname == ("/manage") ?
+                        <ManageInfo />
+                        : null}
+                    {children}
+                </div>
             </div>
         </>
     );

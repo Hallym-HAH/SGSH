@@ -1,7 +1,13 @@
+import 'package:app/models/userprofile.dart';
 import 'package:app/pages/likepage.dart';
+import 'package:app/pages/setting/settings_page.dart';
+import 'package:app/services/bookmark_service.dart';
+import 'package:app/models/business.dart';
+import 'package:app/services/supabase_service.dart';
 import 'package:flutter/material.dart';
-import 'package:app/models/user.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app/widgets/memoinputcard.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:app/pages/storedetail.dart'; // ✅ StoreDetailPage import 추가
 
 class MyPage extends StatefulWidget {
   @override
@@ -9,113 +15,312 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
-  final UserData user = UserData(
-    name: "홍길동",
-    email: "hong@example.com",
-    joinDate: "2024-01-15",
-  );
+  // final String userName = '화려한 식객_84866';
+  List<business_data> bookmarkedStores = [];
+  UserProfile? currentUserProfile;
 
-  // 최근 본 기록 삭제 함수 추가
-  void clearRecentStores() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('recentStores');
+  void _showSnackbar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('최근 본 기록이 삭제되었습니다.')),
+  void _navigateToLikePage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LikesPage()),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserProfile(); // ✅ 추가
+    loadBookmarkedStores();
+  }
+
+  Future<void> loadUserProfile() async {
+    final profile = await SupabaseService().getUserProfile();
+    setState(() {
+      currentUserProfile = profile;
+    });
+  }
+
+  Future<void> loadBookmarkedStores() async {
+    final allStores = await fetchAllStores();
+    final ids = await BookmarkService.getBookmarkedIds();
+
+    setState(() {
+      bookmarkedStores =
+          allStores
+              .where((store) => ids.contains(store.id.toString()))
+              .toList();
+    });
+  }
+
+  Future<List<business_data>> fetchAllStores() async {
+    final supabase = Supabase.instance.client;
+
+    try {
+      final response = await supabase
+          .from('business_data')
+          .select()
+          .order('id', ascending: true);
+
+      if (response.isEmpty) return [];
+
+      return response
+          .map<business_data>((data) => business_data.fromMap(data))
+          .toList();
+    } catch (e) {
+      print("❌ [fetchAllStores] 에러 발생: $e");
+      return [];
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text("나의 페이지", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0.5,
-        iconTheme: IconThemeData(color: Colors.black),
+        centerTitle: false,
+        title: const Text(
+          '마이페이지',
+          style: TextStyle(
+            fontSize: 20,
+            fontFamily: 'Pretendard',
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none, color: Colors.black),
+            onPressed: () => _showSnackbar('알림 설정 이동'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.black),
+            onPressed: () {
+              _showSnackbar('설정 이동');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPage()),
+              );
+            },
+          ),
+        ],
+        foregroundColor: Colors.black,
+        surfaceTintColor: Colors.white,
+        shadowColor: Colors.transparent,
       ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
           children: [
-            Center(
-              child: Icon(Icons.account_circle, size: 100, color: Colors.black45),
-            ),
-            SizedBox(height: 10),
-            Center(
-              child: Text(
-                user.name,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
-              ),
-            ),
-            SizedBox(height: 5),
-            Center(
-              child: Text(
-                user.email,
-                style: TextStyle(fontSize: 16, color: Colors.black54, fontStyle: FontStyle.italic),
-              ),
-            ),
-            Divider(height: 40, thickness: 1, color: Colors.black26),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 20, color: Colors.black54),
-                SizedBox(width: 10),
-                Text(
-                  "가입 날짜: ${user.joinDate}",
-                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, size: 50, color: Colors.grey[600]),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      currentUserProfile?.email ?? '로그인 유저 없음',
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      '포인트 : ${currentUserProfile?.point ?? 0}p',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                  ],
                 ),
               ],
             ),
-            SizedBox(height: 20),
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: (){
-                 Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => LikesPage(),
-                        ),
-                      );},
-                label: Text(
-                  "즐겨찾기",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _showSnackbar('프로필 수정 눌림'),
+                    child: const Text('프로필 수정'),
+                  ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 145, 145, 145),
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _showSnackbar('쿠폰함 열기'),
+                    child: const Text('쿠폰함'),
+                  ),
                 ),
-              ),
+              ],
             ),
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: clearRecentStores,
-                icon: Icon(Icons.delete_outline, color: Colors.white),
-                label: Text(
-                  "최근 본 기록 지우기",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
+            const SizedBox(height: 30),
+            const Divider(height: 1),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '저장한 레스토랑 ${bookmarkedStores.length}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                TextButton(
+                  onPressed: _navigateToLikePage,
+                  child: const Text('전체보기'),
                 ),
-              ),
+              ],
             ),
-            SizedBox(height: 20),
-            Center(
-              child: TextButton.icon(
-                onPressed: () {},
-                icon: Icon(Icons.logout, color: Colors.black54),
-                label: Text(
-                  "로그아웃",
-                  style: TextStyle(fontSize: 16, color: Colors.black54),
+
+            // ✅ 북마크 레스토랑 리스트
+            ...bookmarkedStores.map((store) {
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => StoreDetailPage(store: store),
+                    ),
+                  );
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              store.image,
+                              width: 70,
+                              height: 90,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (
+                                context,
+                                child,
+                                loadingProgress,
+                              ) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 70,
+                                  height: 90,
+                                  color: Colors.grey[300],
+                                  child: Icon(Icons.image, color: Colors.white),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  store.name,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Pretendard',
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  store.description,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFF666666),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      color: Colors.orange,
+                                      size: 16,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      '4.7',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      '(220)',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  store.address,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const Text(
+                                  '점심 1.5만원 · 저녁 2.5만원',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.bookmark, color: Colors.red),
+                            onPressed: () async {
+                              await BookmarkService.toggleBookmark(
+                                store.id.toString(),
+                              );
+                              // 북마크 ID만 최신화
+                              
+
+                              setState(() {
+                                        loadBookmarkedStores();
+
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      MemoInputCard(memoKey: store.name),
+                    ],
+                  ),
                 ),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                ),
-              ),
-            ),
+              );
+            }).toList(),
           ],
         ),
       ),
