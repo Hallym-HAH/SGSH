@@ -3,6 +3,7 @@ import 'package:app/models/business.dart';
 import 'package:app/pages/articlepage.dart';
 import 'package:app/pages/storedetail.dart';
 import 'package:app/pages/storelist.dart';
+import 'package:app/widgets/diningmagazinesection.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,21 +16,19 @@ class Mainpage extends StatefulWidget {
 
 class _MainpageState extends State<Mainpage> {
   final List<Map<String, dynamic>> items = [
-    {'icon': Icons.cake, 'label': "케이크"},
-    {'icon': Icons.local_pizza, 'label': "피자"},
-    {'icon': Icons.coffee, 'label': "커피"},
-    {'icon': Icons.restaurant, 'label': "저녁식사"},
-    {'icon': Icons.local_bar, 'label': "바"},
-    {'icon': Icons.fastfood, 'label': "패스트"},
-    {'icon': Icons.local_florist, 'label': "플로리"},
-    {'icon': Icons.store_mall_directory, 'label': "쇼핑"},
-    {'icon': Icons.local_movies, 'label': "영화"},
-    {'icon': Icons.local_drink, 'label': "음료"},
-    {'icon': Icons.local_offer, 'label': "특가"},
-    {'icon': Icons.local_grocery_store, 'label': "마켓"},
+    {'emoji': '🍚', 'label': "한식"},
+    {'emoji': '🍜', 'label': "중식"},
+    {'emoji': '🍣', 'label': "일식"},
+    {'emoji': '☕', 'label': "카페"},
+    {'emoji': '🍗', 'label': "치킨"},
+    {'emoji': '🍔', 'label': "버거"},
   ];
 
-  List<article_data> article = []; // 📌 Store 객체 리스트
+  // List<article_data> article = [];
+  List<article_data> bannerArticles = [];
+  List<article_data> newsArticles = [];
+  List<article_data> magazineArticles = [];
+
   final supabase = Supabase.instance.client;
   late Future<SharedPreferences> prefsFuture;
 
@@ -38,22 +37,25 @@ class _MainpageState extends State<Mainpage> {
     super.initState();
     prefsFuture = SharedPreferences.getInstance();
     fetchStores();
-
-    // ✅ 초기화 즉시 UI 갱신을 위한 코드 추가
     prefsFuture.then((prefs) {
       setState(() {});
     });
   }
 
-  // 📌 Supabase에서 가게 데이터 가져오기
   void fetchStores() async {
     try {
       var response = await supabase.from("article_data").select();
+      List<article_data> allArticles =
+          response
+              .map<article_data>((data) => article_data.fromMap(data))
+              .toList();
+
       setState(() {
-        article =
-            response
-                .map<article_data>((data) => article_data.fromMap(data))
-                .toList(); // 🔥 변환 적용
+        bannerArticles = allArticles.where((a) => a.type == 2).toList();
+        newsArticles = allArticles.where((a) => a.type == 3).toList();
+        magazineArticles = allArticles.where((a) => a.type == 4).toList();
+
+        print(response.map((e) => e['type']).toList());
       });
     } catch (e) {
       print("❌ 오류 발생: $e");
@@ -63,60 +65,63 @@ class _MainpageState extends State<Mainpage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
-          '메인페이지',
-          style: TextStyle(color: Colors.black, fontFamily: 'Helvetica'),
+        backgroundColor: Colors.white, // 항상 흰색 유지
+        elevation: 0.5,
+        centerTitle: false,
+        title: const Text(
+          '가치가게',
+          style: TextStyle(
+            fontSize: 20,
+            fontFamily: 'Pretendard',
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
         ),
-        backgroundColor: Colors.white,
-        elevation: 2,
-        foregroundColor: Colors.black,
+
+        foregroundColor: Colors.black, // 버튼색이 스크롤에 의해 바뀌지 않도록
+        surfaceTintColor: Colors.white, // 머티리얼 3 대응용 (앱바 배경 흐림 방지)
+        shadowColor: Colors.transparent, // 그림자 투명화(선택)
       ),
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-            Article(article: article),
+            Article(article: bannerArticles),
             Padding(
-              padding: EdgeInsets.all(10),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 6, // 한 행에 6개의 아이템
-                  childAspectRatio: 1, // 아이템 비율 1:1
-                  crossAxisSpacing: 1, // 가로 간격
-                  mainAxisSpacing: 1, // 세로 간격
+              padding: EdgeInsets.all(8).copyWith(top: 20),
+              child: Wrap(
+                alignment: WrapAlignment.start,
+                spacing: 8,
+                runSpacing: 12,
+                children:
+                    items.map((item) {
+                      return SizedBox(
+                        width: MediaQuery.of(context).size.width / 6 - 12,
+                        child: _buildEmojiText(
+                          item['emoji'],
+                          item['label'],
+                          context,
+                        ),
+                      );
+                    }).toList(),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '최근 본 항목',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  return _buildIconText(
-                    items[index]['icon'],
-                    items[index]['label'],
-                    context,
-                  );
-                },
               ),
             ),
-            Container(
-              padding: EdgeInsets.all(20),
-              margin: EdgeInsets.symmetric(vertical: 12.0),
-              color: Colors.grey[50],
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text(
-                    "최근 본 상품",
-                    style: TextStyle(color: Colors.black54, fontSize: 16),
-                  ),
-                  Text(
-                    "더 보기",
-                    style: TextStyle(color: Colors.black54, fontSize: 16),
-                  ),
-                ],
-              ),
-            ),
+
             buildRecentItems(),
+            const SizedBox(height: 20),
+            DummyArticleList(newsArticles: newsArticles),
+            DiningMagazineSection(magazineArticles: magazineArticles),
           ],
         ),
       ),
@@ -137,10 +142,6 @@ class _MainpageState extends State<Mainpage> {
         List<String> recentStores =
             snapshot.data!.getStringList('recentStores') ?? [];
 
-        if (recentStores.isEmpty) {
-          return Center(child: Text("최근 본 가게가 없습니다."));
-        }
-
         return FutureBuilder<List<business_data>>(
           future: Future.wait(
             recentStores.map((storeName) async {
@@ -157,7 +158,6 @@ class _MainpageState extends State<Mainpage> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator());
             }
-
             if (!snapshot.hasData || snapshot.hasError) {
               return Center(child: Text("최근 본 가게 정보를 불러오지 못했습니다."));
             }
@@ -200,7 +200,6 @@ class _MainpageState extends State<Mainpage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ✅ 고유한 태그로 설정
                           ClipRRect(
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(16),
@@ -221,7 +220,6 @@ class _MainpageState extends State<Mainpage> {
                                   ),
                             ),
                           ),
-
                           Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: 10,
@@ -251,14 +249,13 @@ class _MainpageState extends State<Mainpage> {
     );
   }
 
-  Widget _buildIconText(IconData icon, String label, BuildContext context) {
+  Widget _buildEmojiText(String emoji, String label, BuildContext context) {
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => StoreListPage()),
         ).then((_) {
-          // ✅ 여기서 다시 prefsFuture를 갱신해줍니다.
           setState(() {
             prefsFuture = SharedPreferences.getInstance();
           });
@@ -267,16 +264,14 @@ class _MainpageState extends State<Mainpage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Icon(icon, size: 24),
-          SizedBox(height: 2),
+          Text(emoji, style: TextStyle(fontSize: 28)),
+          SizedBox(height: 4),
           Text(label),
         ],
       ),
     );
   }
 }
-
-//===============Article===============
 
 class Article extends StatelessWidget {
   const Article({super.key, required this.article});
@@ -298,48 +293,149 @@ class Article extends StatelessWidget {
     }
 
     return CarouselSlider(
-        options: CarouselOptions(
-          height: 200,
-          autoPlay: true,
-          enlargeCenterPage: true,
-          viewportFraction: 0.85,
-        ),
-        items: article.map((article) {
-          return Builder(
-            builder: (BuildContext context) {
-              return InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => Articlepage(article: article),
-                    ),
-                  );
-                },
-                child: Container(
-                  width: MediaQuery.of(context).size.width,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 194, 194, 194),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Center(
-                    child: Text(
-                      article.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+      options: CarouselOptions(
+        height: 200,
+        autoPlay: true,
+        enlargeCenterPage: true,
+        viewportFraction: 0.85,
+      ),
+      items:
+          article.map((article) {
+            return Builder(
+              builder: (BuildContext context) {
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ArticlePage(article: article),
                       ),
-                      textAlign: TextAlign.center,
+                    );
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // 배경 이미지
+                        Image.network(
+                          article.image ?? '',
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (_, __, ___) => Container(
+                                color: Colors.grey[300],
+                                child: Icon(Icons.broken_image, size: 40),
+                              ),
+                        ),
+
+                        // 반투명 오버레이 + 텍스트
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.black.withOpacity(0.7),
+                                Colors.transparent,
+                              ],
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                            ),
+                          ),
+                          alignment: Alignment.bottomLeft,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                article.title,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                article.desc ?? '',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white70,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                );
+              },
+            );
+          }).toList(),
+    );
+  }
+}
+
+class DummyArticleList extends StatelessWidget {
+  final List<article_data> newsArticles;
+
+  const DummyArticleList({super.key, required this.newsArticles});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 24, 16, 0),
+          child: Text(
+            '가치가게 소식',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+        ),
+        ...newsArticles.map((article) {
+          return ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                article.image ?? '',
+                width: 64,
+                height: 64,
+                fit: BoxFit.cover,
+                errorBuilder:
+                    (_, __, ___) => Container(
+                      width: 64,
+                      height: 64,
+                      color: Colors.grey[300],
+                      child: Icon(Icons.image, size: 32),
+                    ),
+              ),
+            ),
+            title: Text(
+              article.title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(article.desc ?? ''),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ArticlePage(article: article),
                 ),
               );
             },
           );
         }).toList(),
-      
+      ],
     );
   }
 }
