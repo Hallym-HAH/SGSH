@@ -5,7 +5,20 @@ import ManageSideBar from "@/components/feature/manage_sidebar";
 import { supabaseClient } from '@/lib/supabase';
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Nanum_Gothic, Jua } from 'next/font/google';
 
+const nanumGothic = Nanum_Gothic({
+    subsets: ['latin'],
+    weight: ['700'],
+    display: 'swap',
+    variable: '--font-nanum-gothic',
+});
+
+const jua = Jua({
+    subsets: ['latin'],
+    weight: ['400'],
+    display: 'swap',
+});
 
 export default function ManageLayout({ children }) {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -42,7 +55,7 @@ export default function ManageLayout({ children }) {
     }
 
     return (
-        <>
+        <div className={jua.className}>
             {isLoggedIn && userData.b_id > 0 ?
                 <div className="flex flex-row min-h-screen bg-[#f9fafb]">
                     < ManageSideBar />
@@ -50,7 +63,7 @@ export default function ManageLayout({ children }) {
                         <ManageNavBar />
                         {children}
                     </div>
-                </div > :
+                </div> :
                 <div>
                     <nav className="w-full bg-white border-b border-[#e4e7ec] sticky top-0 z-10">
                         <div className="justify-start pl-6 pr-2 md:px-2 lg:max-w-9xl md:items-center md:flex md:px-8">
@@ -75,6 +88,6 @@ export default function ManageLayout({ children }) {
                     }
                 </div>
             }
-        </>
+        </div>
     );
 }

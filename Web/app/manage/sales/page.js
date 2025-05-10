@@ -31,18 +31,11 @@ export default function ManageCalc() {
                                 onClick={e => { e.preventDefault(); setOpenTab(2); }}
                                 data-toggle="tab"
                                 href="#link2"
-                                role="tablist">메뉴별 매출</a>
-                        </li>
-                        <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
-                            <a className={"text-xs font-bold uppercase px-5 py-3 shadow-lg rounded block leading-normal " + (openTab === 3 ? "text-white bg-amber-600" : "text-amber-600 bg-white")}
-                                onClick={e => { e.preventDefault(); setOpenTab(3); }}
-                                data-toggle="tab"
-                                href="#link3"
-                                role="tablist">월별 매출</a>
+                                role="tablist">매출 분석</a>
                         </li>
                         <li className="-mb-px mr-2 last:mr-0 flex-auto text-center">
                             <a className={"text-xs font-bold uppercase px-5 py-3 shadow-lg rounded block leading-normal " + (openTab === 4 ? "text-white bg-amber-600" : "text-amber-600 bg-white")}
-                                onClick={e => { e.preventDefault(); setOpenTab(4); }}
+                                onClick={e => { e.preventDefault(); setOpenTab(3); }}
                                 data-toggle="tab"
                                 href="#link3"
                                 role="tablist">매출 계산기</a>
@@ -59,10 +52,7 @@ export default function ManageCalc() {
                                 <div className={(openTab === 2 ? "block" : "hidden")} id="link2">
 
                                 </div>
-                                <div className={openTab === 3 ? "block" : "hidden"} id="link3">
-
-                                </div>
-                                <div className={openTab === 4 ? "block" : "hidden"} id="link4">
+                                <div className={openTab === 3 ? "block" : "hidden"} id="link4">
                                     <SalesCalc />
                                 </div>
 
