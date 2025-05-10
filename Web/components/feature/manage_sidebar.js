@@ -17,14 +17,20 @@ export default function ManageSideBar() {
                                     alt="Picture of the author"
                                     width={30}
                                     height={30} />
-                                <p className="ml-3 font-bold text-xl">서비스명</p>
+                                <p className="ml-3 font-bold text-xl">가치가게</p>
                             </div>
 
                         </li>
                         <li>
                             <Link href="/manage" className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <svg aria-hidden="true" className={`w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white`} fill={`${pathname == ("/manage") ? '#ba5c54' : 'currentColor'}`} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
-                                <p className={`ml-3 ${pathname == ("/manage") ? 'font-bold text-[#ba5c54]' : ''}`}>가게 정보</p>
+                                <p className={`ml-3 ${pathname == ("/manage") ? 'font-bold text-[#ba5c54]' : ''}`}>대시보드</p>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/manage/info" className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <svg aria-hidden="true" className={`w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white`} fill={`${pathname == ("/manage/info") ? '#ba5c54' : 'currentColor'}`} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
+                                <p className={`ml-3 ${pathname == ("/manage/info") ? 'font-bold text-[#ba5c54]' : ''}`}>가게 정보</p>
                             </Link>
                         </li>
                         <li>

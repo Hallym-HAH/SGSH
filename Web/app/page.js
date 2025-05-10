@@ -53,7 +53,7 @@ export default function Home() {
       </div>
 
       <div className="flex flex-col mt-8 py-10 pl-14 text-start bg-slate-50">
-        <p className="font-extrabold leading-7">서비스명</p>
+        <p className="font-extrabold leading-7">가치가게</p>
         <p className="leading-7">팀 HAH, 강원특별자치도 춘천시 한림대학길 1</p>
         <p className="leading-7">000-00-000000</p>
         <p className="leading-7">통신판매업 신고번호 2025-강원춘천-0000호</p>
