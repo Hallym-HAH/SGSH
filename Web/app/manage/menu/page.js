@@ -11,6 +11,10 @@ export default function ManageMenu() {
 
     const photoInput = useRef(null);
 
+    const [userData, setUserData] = useState({
+        b_id: 0,
+    });
+
     const [isLoading, setIsLoading] = useState(true);
     const [image, setImage] = useState(null);
     const [menus, setMenus] = useState([]);
@@ -67,7 +71,7 @@ export default function ManageMenu() {
             .from("menu_data")
             .insert([
                 {
-                    b_id: 1,
+                    b_id: userData.b_id,
                     name: menu_name,
                     price: menu_price,
                     description: menu_description,
@@ -89,7 +93,7 @@ export default function ManageMenu() {
         }
 
         setMenus([...menus, {
-            b_id: 1,
+            b_id: userData.b_id,
             name: menu_name,
             price: menu_price,
             description: menu_description,
@@ -101,10 +105,21 @@ export default function ManageMenu() {
 
 
     useEffect(() => {
+
+
+
         const fetchMenus = async () => {
-            const { data } = await supabaseClient.from('menu_data').select("*").eq('b_id', 1).order("id", { ascending: true });
-            setMenus(data)
-            setIsLoading(false)
+            const { data: { user } } = await supabaseClient.auth.getUser()
+            if (user) {
+                const { data: u_data } = await supabaseClient.from('profile_data').select(`*`).eq('id', user.id).single();
+                setUserData({
+                    b_id: u_data.b_id
+                })
+                var b_id = u_data.b_id;
+                const { data } = await supabaseClient.from('menu_data').select("*").eq('b_id', b_id).order("id", { ascending: true });
+                setMenus(data)
+                setIsLoading(false)
+            }
         }
 
         fetchMenus()
@@ -198,7 +213,7 @@ export default function ManageMenu() {
         } else if (addMenuError) {
         }
 
-        const { data } = await supabaseClient.from('menu_data').select("*").eq('b_id', 1).order("id", { ascending: true });
+        const { data } = await supabaseClient.from('menu_data').select("*").eq('b_id', userData.b_id).order("id", { ascending: true });
         setMenus(data)
 
         // setMenus([...menus, {
@@ -218,7 +233,7 @@ export default function ManageMenu() {
             .delete()
             .eq('id', edit_id)
 
-        const { data } = await supabaseClient.from('menu_data').select("*").eq('b_id', 1).order("id", { ascending: true });
+        const { data } = await supabaseClient.from('menu_data').select("*").eq('b_id', userData.b_id).order("id", { ascending: true });
         setMenus(data)
 
         closeEditModal();

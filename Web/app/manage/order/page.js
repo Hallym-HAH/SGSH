@@ -9,7 +9,9 @@ import { supabaseClient } from '@/lib/supabase';
 export default function ManageOrder() {
     const [isLoading, setIsLoading] = useState(true);
     const [orders, setOrders] = useState([]);
-
+    const [userData, setUserData] = useState({
+        b_id: 0,
+    });
 
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -20,28 +22,39 @@ export default function ManageOrder() {
     // const [tmpOrders, setTmpOrders] = useState([]);
 
     useEffect(() => {
-        var test1;
-        var test2;
-        const fetchOrders = async () => {
-            // const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', 1).order("id", { ascending: false });
-            // setOrders(data)
-            // setIsLoading(false)
-            const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', 1).like('time', `%${formattedDate}%`).order("id", { ascending: false });
-            test1 = data;
-        }
-        fetchOrders()
+        const fetchMenus = async () => {
+            const { data: { user } } = await supabaseClient.auth.getUser()
+            if (user) {
+                const { data: u_data } = await supabaseClient.from('profile_data').select(`*`).eq('id', user.id).single();
+                setUserData({
+                    b_id: u_data.b_id
+                })
+                var b_id = u_data.b_id;
+                var test1;
+                var test2;
+                const fetchOrders = async () => {
+                    // const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', 1).order("id", { ascending: false });
+                    // setOrders(data)
+                    // setIsLoading(false)
+                    const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).like('time', `%${formattedDate}%`).order("id", { ascending: false });
+                    test1 = data;
+                }
+                fetchOrders()
 
-        const intervalId = setInterval(async () => {
-            const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', 1).like('time', `%${formattedDate}%`).order("id", { ascending: false });
-            setOrders(data)
-            test2 = data;
-            setIsLoading(false)
-            if (test1.length != test2.length) {
-                beep();
-                test1 = test2;
+                const intervalId = setInterval(async () => {
+                    const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).like('time', `%${formattedDate}%`).order("id", { ascending: false });
+                    setOrders(data)
+                    test2 = data;
+                    setIsLoading(false)
+                    if (test1.length != test2.length) {
+                        beep();
+                        test1 = test2;
+                    }
+                }, 1000);
+                return () => clearInterval(intervalId);
             }
-        }, 1000);
-        return () => clearInterval(intervalId);
+        }
+        fetchMenus()
     }, [formattedDate])
 
     function beep() {
@@ -64,7 +77,7 @@ export default function ManageOrder() {
             .update({ status: 'check' })
             .eq('id', parseInt(id))
         setOrders([]);
-        const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', 1).like('time', `%${formattedDate}%`).order("id", { ascending: false });
+        const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', userData.b_id).like('time', `%${formattedDate}%`).order("id", { ascending: false });
         setOrders(data)
     }
     async function cancelOrder(id) {
@@ -74,7 +87,7 @@ export default function ManageOrder() {
             .update({ status: 'cancel' })
             .eq('id', id)
         setOrders([]);
-        const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', 1).like('time', `%${formattedDate}%`).order("id", { ascending: false });
+        const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', userData.b_id).like('time', `%${formattedDate}%`).order("id", { ascending: false });
         setOrders(data)
     }
 
@@ -83,7 +96,7 @@ export default function ManageOrder() {
         const date = new Date(formattedDate);
         date.setDate(date.getDate() + 1);
         setFormattedDate(date.toISOString().slice(0, 10));
-        const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', 1).like('time', `%${date.toISOString().slice(0, 10)}%`).order("id", { ascending: false });
+        const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', userData.b_id).like('time', `%${date.toISOString().slice(0, 10)}%`).order("id", { ascending: false });
         setOrders(data)
     };
 
@@ -92,7 +105,7 @@ export default function ManageOrder() {
         const date = new Date(formattedDate);
         date.setDate(date.getDate() - 1);
         setFormattedDate(date.toISOString().slice(0, 10));
-        const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', 1).like('time', `%${date.toISOString().slice(0, 10)}%`).order("id", { ascending: false });
+        const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', userData.b_id).like('time', `%${date.toISOString().slice(0, 10)}%`).order("id", { ascending: false });
         setOrders(data)
     };
 
