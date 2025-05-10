@@ -54,22 +54,22 @@ export default function ManageNavBar() {
   }
 
   return (
-    <nav className="w-full bg-white border-b border-[#e4e7ec] sticky top-0 z-10">
+    <nav className="w-full rounded-b-xl bg-[#4C6EF8] sticky top-0 z-10">
       <div className="justify-start pl-6 pr-2 md:px-2 lg:max-w-9xl md:items-center md:flex md:px-8">
 
         <div className="flex w-full items-center justify-between py-3 md:py-5 md:block ">
           <div className="flex w-full items-center justify-between">
             <Link href="/">
-              <h2 className="text-2xl text-black font-bold">{bName ? bName : "가치가게"}</h2>
+              <h2 className="text-2xl text-white font-bold">{bName ? bName : "가치가게"}</h2>
             </Link>
             <div className="hidden md:block">
               {isLoggedIn ?
                 <div className="flex gap-x-4">
-                  <p className="">{userData.email}</p>
-                  <a className="" onClick={signOut}>로그아웃</a>
+                  <p className="text-white font-bold">{userData.email}</p>
+                  <a className="text-white font-bold" onClick={signOut}>로그아웃</a>
                 </div>
                 :
-                <a className="" onClick={signInWithKakao}>로그인</a>
+                <a className="text-white font-bold" onClick={signInWithKakao}>로그인</a>
               }
             </div>
           </div>
@@ -119,7 +119,10 @@ export default function ManageNavBar() {
           <div className="md:hidden">
             <ul className="items-center justify-center space-y-8 md:flex md:space-x-6 md:space-y-0">
               <li className="text-black">
-                <Link className="font-bold" href="/manage">가게 정보</Link>
+                <Link className="font-bold" href="/manage">대시보드</Link>
+              </li>
+              <li className="text-black">
+                <Link className="font-bold" href="/manage/info">가게 정보</Link>
               </li>
               <li className="text-black">
                 <Link className="font-bold" href="/manage/menu">메뉴 관리</Link>
