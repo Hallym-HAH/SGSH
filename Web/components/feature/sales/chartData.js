@@ -120,3 +120,44 @@ export const chartData3 = (formattedDate, orders = {}) => {
         ],
     };
 };
+
+
+export const dashboardChartData = (formattedDate, orders = {}) => {
+    const hourLimit = getHourLimit(formattedDate);
+
+    return {
+        title: "누적 매출",
+        options: {
+            chart: { id: "basic-bar", type: 'line', toolbar: { show: false }, zoom: { enabled: false, allowMouseWheelZoom: false }, },
+            xaxis: { categories: HOURS.map(h => Number(h)) },
+            yaxis: { min: 0, },
+            tooltip: { x: { formatter: (value) => `${value + 7}시` }, y: { formatter: (value) => `${value}원` }, },
+            dataLabels: { enabled: false },
+            noData: { text: '데이터가 없습니다.' },
+        },
+        series: [
+            {
+                type: 'area',
+                name: "누적 매출",
+                data: HOURS.map(
+                    h => {
+                        const hourNum = Number(h);
+                        if (hourNum > hourLimit) return null;
+                        return (orders.cumulative && orders.cumulative[`${formattedDate} ${h}`]) ?? 0;
+                    }
+                )
+            },
+            {
+                type: 'line',
+                name: "시간 별 매출",
+                data: HOURS.map(
+                    h => {
+                        const hourNum = Number(h);
+                        if (hourNum > hourLimit) return null;
+                        return (orders.result && orders.result[`${formattedDate} ${h}`]) ?? 0;
+                    }
+                )
+            }
+        ],
+    };
+};
