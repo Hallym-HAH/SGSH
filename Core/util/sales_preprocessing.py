@@ -56,13 +56,15 @@ def get_top_5_menu_combinations(order_list):
     order_dict = get_order_dict(order_list)
     combo_counter = Counter()
     for orders in order_dict.values():
-        names = sorted([o['name'] for o in orders])
+        # 중복 메뉴를 제거하기 위해 set 사용
+        names = sorted(set([o['name'] for o in orders]))
         # 2개 이상 조합만 고려
         for i in range(len(names)):
             for j in range(i+1, len(names)):
                 combo = (names[i], names[j])
                 combo_counter[combo] += 1
     return combo_counter.most_common(5)
+
 
 def get_most_frequent_combo_with_menu(order_list, menu):
     """특정 메뉴와 가장 자주 함께 주문되는 메뉴 찾기"""
@@ -84,7 +86,8 @@ def get_total_sales_by_combo(order_list):
     order_dict = get_order_dict(order_list)
     sales_by_combo = defaultdict(int)
     for orders in order_dict.values():
-        names = sorted([o['name'] for o in orders])
+        # 중복 메뉴를 제거하기 위해 set 사용
+        names = sorted(set([o['name'] for o in orders]))
         total_price = sum(o['price'] * o['count'] for o in orders)
         # 2개 이상 조합만 고려
         for i in range(len(names)):
@@ -99,7 +102,8 @@ def find_frequent_itemsets(order_list, min_support=0.5, max_len=3):
     order_dict = get_order_dict(order_list)
     transactions = []
     for orders in order_dict.values():
-        transactions.append([o['name'] for o in orders])
+        # 중복 메뉴를 제거하기 위해 set 사용
+        transactions.append(list(set([o['name'] for o in orders])))
 
     # 데이터가 없거나 패턴이 없을 경우 빈 DataFrame 반환
     if not transactions:
@@ -111,6 +115,7 @@ def find_frequent_itemsets(order_list, min_support=0.5, max_len=3):
 
     # 빈발 패턴 탐지
     frequent_itemsets = apriori(df, min_support=min_support, use_colnames=True, max_len=max_len)
+
     if len(frequent_itemsets) == 0:
         return pd.DataFrame(columns=['support', 'itemsets', 'length', 'order_count', 'total_sales'])
 
