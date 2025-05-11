@@ -6,6 +6,7 @@ import { supabaseClient } from '@/lib/supabase';
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Nanum_Gothic, Jua } from 'next/font/google';
+import ScrollToTop from "@/components/ScrollToTop";
 
 const nanumGothic = Nanum_Gothic({
     subsets: ['latin'],
@@ -58,6 +59,7 @@ export default function ManageLayout({ children }) {
         <div className={jua.className}>
             {isLoggedIn && userData.b_id > 0 ?
                 <div className="flex flex-row min-h-screen bg-[#f9fafb]">
+                    <ScrollToTop />
                     < ManageSideBar />
                     <div className="w-full md:ml-64">
                         <ManageNavBar />

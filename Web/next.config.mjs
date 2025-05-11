@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  trailingSlash: true,
   images: {
     // domains: ["localhost", "picsum.photos", "cytktlrbanxiswqurqth.supabase.co", "*"],
     remotePatterns: [
