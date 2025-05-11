@@ -16,6 +16,7 @@ export default function ManageDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     // const [orders, setOrders] = useState([]);
     const [orders, setOrders] = useState({ orders: [], result: {}, cumulative: {}, orderByTime: {} });
+    const [cOrders, setCOrders] = useState([]);
     const [totalAmount, setTotalAmount] = useState(0);
     const [reserved, setReserved] = useState([]);
     const [hits, setHits] = useState([]);
@@ -47,8 +48,9 @@ export default function ManageDashboard() {
                 // console.log(b_id);
 
                 // 일단 모든 매출 (나중에 취소 매출 제외)
-                const { data: orders } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).like('time', `%${formattedDate}%`).order("id", { ascending: false });
-
+                const { data: orders } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).neq('status', "cancel").like('time', `%${formattedDate}%`).order("id", { ascending: false });
+                const { data: c_orders } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).eq('status', "cancel").like('time', `%${formattedDate}%`).order("id", { ascending: false });
+                setCOrders(c_orders);
                 const result = {};
                 const orderByTime = {};
 
@@ -220,6 +222,8 @@ export default function ManageDashboard() {
                         <div className="flex flex-col p-[20px] h-[150px] bg-white rounded-xl">
                             <p className="text-xl">주문</p>
                             <CountUp duration={2} className="" end={orders.orders.length} suffix="건" />
+                            취소
+                            <CountUp duration={2} className="" end={cOrders.length} suffix="건" />
                         </div>
                         <div className="flex flex-col p-[20px] h-[150px] bg-white rounded-xl">
                             <p className="text-xl">예약</p>
