@@ -1006,6 +1006,56 @@ const SalesAnalysis = () => {
                 </>
             )}
 
+            {/* 섹션 탭 네비게이션 */}
+            {analysisData && (
+                <div className="mb-5">
+                    <ul className="flex flex-wrap -mb-px text-sm font-medium text-center border-b border-gray-200"
+                        role="tablist">
+                        {analysisData.map((section, idx) => (
+                            <li key={idx} className="flex-1" role="presentation">
+                                <a
+                                    className={
+                                        "inline-block w-full p-4 rounded-t-lg " +
+                                        (activeSection === idx
+                                            ? "text-blue-600 border-b-2 border-blue-600 active"
+                                            : "hover:text-gray-600 hover:border-gray-300 border-b-2 border-transparent")
+                                    }
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setActiveSection(idx);
+                                    }}
+                                    href={`#section-${idx}`}
+                                    data-toggle="tab"
+                                    role="tab"
+                                >
+                                    {section.title}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {/* 섹션 내용 */}
+            {analysisData && (
+                <div className="tab-content">
+                    {analysisData.map((section, idx) => (
+                        <div
+                            key={idx}
+                            className={`tab-pane ${activeSection === idx ? 'block' : 'hidden'}`}
+                            id={`section-${idx}`}
+                            role="tabpanel"
+                        >
+                            <div className="p-4 border border-gray-200 rounded-lg bg-white">
+                                <ul className="list-none">
+                                    {renderContent(section.content)}
+                                </ul>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* 오류 표시 */}
             {error && (
                 <div className="p-6 text-center text-red-500 bg-white rounded-lg shadow">
