@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class QnAPage extends StatelessWidget {
+class AccountPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -11,20 +11,15 @@ class QnAPage extends StatelessWidget {
         elevation: 0.5,
         centerTitle: false,
         title: const Text(
-          '문의하기',
+          '내 정보 수정',
           style: TextStyle(
             fontSize: 20,
-            fontFamily: 'Pretendard',
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
         ),
       ),
-      body: ListView(
-        children: const [
-          ListTile(title: Text('문의하기'), subtitle: Text('support@example.com')),
-        ],
-      ),
+      body: const Center(child: Text('계정 정보 수정 페이지입니다.')),
     );
   }
 }

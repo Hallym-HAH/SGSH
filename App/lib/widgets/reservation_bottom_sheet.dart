@@ -2,14 +2,14 @@ import 'package:app/pages/reservationpage.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-void showReservationBottomSheet(BuildContext context) {
+void showReservationBottomSheet(BuildContext context, {
+  required String storeName,
+  required int storeId, // ✅ 추가
+}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+    backgroundColor: Colors.transparent, // 투명하게 해서 그림자 효과
     builder: (context) {
       DateTime focusedDay = DateTime.now();
       DateTime? selectedDay = DateTime.now();
@@ -44,40 +44,60 @@ void showReservationBottomSheet(BuildContext context) {
 
       return StatefulBuilder(
         builder: (context, setState) {
-          return DraggableScrollableSheet(
-            expand: false,
-            initialChildSize: 0.75,
-            maxChildSize: 0.95,
-            minChildSize: 0.4,
-            builder: (_, scrollController) {
-              final isComplete = selectedDay != null &&
-                  selectedPeople != null &&
-                  selectedTime != null;
-
-              return Stack(
+          final isComplete = selectedDay != null && selectedPeople != null && selectedTime != null;
+          return Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 60, bottom: 20),
+              constraints: BoxConstraints(
+                maxWidth: 420,
+                minWidth: 0,
+                maxHeight: MediaQuery.of(context).size.height * 0.92,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.10),
+                    blurRadius: 30,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 80),
+                  // 1. 드래그바 (고정)
+                  Center(
+                    child: Container(
+                      width: 48,
+                      height: 6,
+                      margin: const EdgeInsets.only(top: 24, bottom: 24),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                  // 2. 예약 폼 (스크롤)
+                  Expanded(
                     child: SingleChildScrollView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 30),
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          /// 드래그 바
-                          Center(
-                            child: Container(
-                              width: 40,
-                              height: 4,
-                              margin: const EdgeInsets.only(bottom: 16),
+                          // 날짜 선택
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            margin: EdgeInsets.only(bottom: 18),
                               decoration: BoxDecoration(
-                                color: Colors.grey[400],
-                                borderRadius: BorderRadius.circular(2),
-                              ),
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey[200]!),
                             ),
-                          ),
-
-                          /// 날짜 선택
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                           const Text(
                             '날짜 선택',
                             style: TextStyle(
@@ -85,43 +105,58 @@ void showReservationBottomSheet(BuildContext context) {
                               fontSize: 15,
                             ),
                           ),
+                                SizedBox(height: 8),
                           TableCalendar(
-  firstDay: DateTime.now(), // ✅ 오늘 이후만 선택 가능
-  lastDay: DateTime.utc(2030, 12, 31),
-  focusedDay: focusedDay,
-  selectedDayPredicate: (day) => isSameDay(selectedDay, day),
-  onDaySelected: (selected, focused) {
-    setState(() {
-      selectedDay = selected;
-      focusedDay = focused;
-    });
-  },
-  enabledDayPredicate: (day) {
-    // ✅ 오늘보다 이전은 비활성화
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    return !day.isBefore(today);
-  },
-  calendarStyle: const CalendarStyle(
-    todayDecoration: BoxDecoration(
-      color: Color.fromARGB(255, 183, 183, 183),
-      shape: BoxShape.circle,
-    ),
-    selectedDecoration: BoxDecoration(
-      color: Colors.black,
-      shape: BoxShape.circle,
-    ),
-  ),
-  headerStyle: const HeaderStyle(
-    formatButtonVisible: false,
-    titleCentered: true,
-  ),
-),
-
-
-                          const SizedBox(height: 20),
-
-                          /// 인원 선택
+                                  firstDay: DateTime.now(),
+                            lastDay: DateTime.utc(2030, 12, 31),
+                            focusedDay: focusedDay,
+                            selectedDayPredicate:
+                                (day) => isSameDay(selectedDay, day),
+                            onDaySelected: (selected, focused) {
+                              setState(() {
+                                selectedDay = selected;
+                                focusedDay = focused;
+                              });
+                            },
+                            enabledDayPredicate: (day) {
+                              final now = DateTime.now();
+                              final today = DateTime(
+                                now.year,
+                                now.month,
+                                now.day,
+                              );
+                              return !day.isBefore(today);
+                            },
+                            calendarStyle: const CalendarStyle(
+                              todayDecoration: BoxDecoration(
+                                color: Color.fromARGB(255, 183, 183, 183),
+                                shape: BoxShape.circle,
+                              ),
+                              selectedDecoration: BoxDecoration(
+                                color: Colors.black,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            headerStyle: const HeaderStyle(
+                              formatButtonVisible: false,
+                              titleCentered: true,
+                            ),
+                          ),
+                              ],
+                            ),
+                          ),
+                          // 인원 선택
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            margin: EdgeInsets.only(bottom: 18),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                           const Text(
                             '인원 선택',
                             style: TextStyle(
@@ -129,21 +164,24 @@ void showReservationBottomSheet(BuildContext context) {
                               fontSize: 15,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                                SizedBox(height: 12),
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: List.generate(7, (index) {
                                 final int people = index + 1;
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                  ),
                                   child: ChoiceChip(
                                     label: Text(
                                       '$people명',
                                       style: TextStyle(
-                                        color: selectedPeople == people
-                                            ? Colors.white
-                                            : Colors.black,
+                                        color:
+                                            selectedPeople == people
+                                                ? Colors.white
+                                                : Colors.black,
                                       ),
                                     ),
                                     selected: selectedPeople == people,
@@ -160,10 +198,21 @@ void showReservationBottomSheet(BuildContext context) {
                               }),
                             ),
                           ),
-
-                          const SizedBox(height: 24),
-
-                          /// 시간 선택
+                              ],
+                            ),
+                          ),
+                          // 시간 선택
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            margin: EdgeInsets.only(bottom: 18),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                           const Text(
                             '시간 선택',
                             style: TextStyle(
@@ -171,95 +220,155 @@ void showReservationBottomSheet(BuildContext context) {
                               fontSize: 15,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                                SizedBox(height: 12),
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
-                              children: [
-                                '오전 11:00',
-                                '오전 11:30',
-                                '오후 12:00',
-                                '오후 12:30',
-                                '오후 1:00',
-                                '오후 2:00',
-                              ].map((time) {
-                                final isSelected = selectedTime == time;
-                                final isDisabled = selectedDay != null &&
-                                    isPastTime(time, selectedDay!);
+                              children:
+                                  [
+                                    '오전 11:00',
+                                    '오전 11:30',
+                                    '오후 12:00',
+                                    '오후 12:30',
+                                    '오후 1:00',
+                                    '오후 2:00',
+                                  ].map((time) {
+                                    final isSelected = selectedTime == time;
+                                    final isDisabled =
+                                        selectedDay != null &&
+                                        isPastTime(time, selectedDay!);
 
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: isSelected
-                                          ? Colors.black
-                                          : Colors.white,
+                                    return Padding(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 10,
+                                        horizontal: 4.0,
                                       ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        side: BorderSide(color: Colors.black12),
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              isSelected
+                                                  ? Colors.black
+                                                  : Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 10,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                            side: BorderSide(
+                                              color: Colors.black12,
+                                            ),
+                                          ),
+                                          elevation: 0,
+                                        ),
+                                        onPressed:
+                                            isDisabled
+                                                ? null
+                                                : () {
+                                                  setState(() {
+                                                    selectedTime = time;
+                                                  });
+                                                },
+                                        child: Text(
+                                          time,
+                                          style: TextStyle(
+                                            color:
+                                                isDisabled
+                                                    ? Colors.grey
+                                                    : (isSelected
+                                                        ? Colors.white
+                                                        : Colors.black),
+                                          ),
+                                        ),
                                       ),
-                                      elevation: 0,
-                                    ),
-                                    onPressed: isDisabled
-                                        ? null
-                                        : () {
-                                            setState(() {
-                                              selectedTime = time;
-                                            });
-                                          },
-                                    child: Text(
-                                      time,
-                                      style: TextStyle(
-                                        color: isDisabled
-                                            ? Colors.grey
-                                            : (isSelected ? Colors.white : Colors.black),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                                    );
+                                  }).toList(),
                             ),
                           ),
-
+                              ],
+                            ),
+                          ),
                           const SizedBox(height: 32),
                         ],
                       ),
                     ),
                   ),
-
-                  /// 예약하기 버튼
-                  Positioned(
-                    bottom: 20,
-                    left: 16,
-                    right: 16,
+                  // 3. 예약 정보 요약 + 예약하기 버튼 (고정)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Builder(
+                      builder: (context) {
+                        List<String> infoParts = [];
+                        if (selectedDay != null) {
+                          infoParts.add('${selectedDay!.year}년 ${selectedDay!.month.toString().padLeft(2, '0')}월 ${selectedDay!.day.toString().padLeft(2, '0')}일');
+                        }
+                        if (selectedPeople != null) {
+                          infoParts.add('${selectedPeople}명');
+                        }
+                        if (selectedTime != null) {
+                          infoParts.add('$selectedTime시');
+                        }
+                        String info = infoParts.join(' · ');
+                        return info.isNotEmpty
+                            ? Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.04),
+                                      blurRadius: 8,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  info,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              )
+                            : SizedBox(height: 0);
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: isComplete
-                            ? () {
-                                Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ReservationConfirmPage(
-                                      date: selectedDay!,
-                                      time: selectedTime!,
-                                      people: selectedPeople!,
+                        onPressed:
+                            isComplete
+                                ? () {
+                                  Navigator.pop(context);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) => ReservationConfirmPage(
+                                            date: selectedDay!,
+                                            time: selectedTime!,
+                                            people: selectedPeople!,
+                                            storeName: storeName, 
+  businessId: storeId, // ✅ 수정
+                                          ),
                                     ),
-                                  ),
-                                );
-                              }
-                            : null,
+                                  );
+                                }
+                                : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
                               isComplete ? Colors.black : Colors.grey.shade300,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                         child: Text(
@@ -267,15 +376,15 @@ void showReservationBottomSheet(BuildContext context) {
                           style: TextStyle(
                             color: isComplete ? Colors.white : Colors.grey,
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 17,
                           ),
                         ),
                       ),
                     ),
                   ),
                 ],
-              );
-            },
+              ),
+            ),
           );
         },
       );

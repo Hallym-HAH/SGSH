@@ -1,5 +1,5 @@
 import 'package:app/auth/loginpage.dart';
-import 'package:app/pages/setting/qna_page.dart';
+import 'package:app/setting/qna_page.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'account_page.dart';
@@ -20,7 +20,6 @@ class SettingsPage extends StatelessWidget {
           '설정',
           style: TextStyle(
             fontSize: 20,
-            fontFamily: 'Pretendard',
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),

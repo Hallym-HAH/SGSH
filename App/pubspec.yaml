@@ -27,6 +27,10 @@ dependencies:
   carousel_slider: ^5.0.0
   table_calendar: ^3.2.0
   flutter_html: ^3.0.0
+  intl: ^0.20.2
+  collection: ^1.19.1
+  provider: ^6.1.5
+  webview_flutter: ^4.11.0
 
 
 
@@ -41,6 +45,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   fonts:
+    - family: moneygrapy
+      fonts:
+        - asset: assets/fonts/Moneygraphy-Rounded.ttf
+        - asset: assets/fonts/Moneygraphy-Pixel.ttf
     - family: Pretendard
       fonts:
         - asset: assets/fonts/Pretendard-Thin.ttf
@@ -61,8 +69,12 @@ flutter:
           weight: 800
         - asset: assets/fonts/Pretendard-Black.ttf
           weight: 900
+    - family: TossFace
+      fonts:
+        - asset: assets/fonts/TossFaceFontMac.ttf
   assets:
     - .env
     - assets/images/dummy_image/
     - assets/images/adimage/
-
+    - assets/images/logo/
+    - assets/icons/

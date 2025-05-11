@@ -1,12 +1,45 @@
 // 🔧 MarkerService 개선 버전 (viewport 필터링 지원)
 import 'package:app/models/business.dart';
+import 'package:app/models/hit_data.dart';
+import 'package:collection/collection.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 class MarkerService {
   final Set<Marker> visibleMarkers = {}; // 지도에 실제로 표시될 마커
   final List<Map<String, dynamic>> _savedBusinesses = [];
   final Set<Marker> _allMarkers = {}; // 모든 마커 (필터링 전)
+
+  // 카테고리별 샘플 PNG 경로 매핑
+  final Map<String, String> _categoryIconPaths = {
+    '한식': 'assets/icons/han.png',
+    '중식': 'assets/icons/china.png',
+    '일식': 'assets/icons/japan.png',
+    '카페': 'assets/icons/cafe.png',
+    '버거': 'assets/icons/burger.png',
+    '기타': 'assets/icons/etc.png',
+  };
+
+  // BitmapDescriptor 캐싱
+  final Map<String, BitmapDescriptor> _categoryIcons = {};
+
+  Future<BitmapDescriptor> _getCategoryIcon(String category) async {
+    if (_categoryIcons.containsKey(category)) {
+      return _categoryIcons[category]!;
+    }
+    final path = _categoryIconPaths[category] ?? _categoryIconPaths['기타']!;
+    final icon = await BitmapDescriptor.fromAssetImage(
+      const ImageConfiguration(size: Size(36, 36)),
+      path,
+    );
+    _categoryIcons[category] = icon;
+    return icon;
+  }
+
+  List<business_data> get savedBusinessList =>
+      _savedBusinesses.map((biz) => business_data.fromMap(biz)).toList();
 
   /// Supabase에서 DB에 저장된 모든 가게 불러오기
   Future<void> loadSavedBusinesses() async {
@@ -19,11 +52,15 @@ class MarkerService {
   }
 
   /// DB에서 가져온 savedBusinesses 데이터로 마커 생성
-  void buildSavedBusinessMarkers(
+  Future<void> buildSavedBusinessMarkers(
     void Function(String, String, business_data?) onMarkerTap,
-  ) {
+  ) async {
     _allMarkers.clear();
 
+    final icon = await BitmapDescriptor.fromAssetImage(
+      const ImageConfiguration(size: Size(36, 36)),
+      'assets/icons/image.png',
+    );
     for (var biz in _savedBusinesses) {
       final lat = double.tryParse(biz['lat'].toString());
       final lng = double.tryParse(biz['lng'].toString());
@@ -37,7 +74,7 @@ class MarkerService {
           markerId: MarkerId('saved-$name'),
           position: LatLng(lat, lng),
           infoWindow: InfoWindow(title: name, snippet: address),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+          icon: icon,
           onTap: () => onMarkerTap(name, address, business_data.fromMap(biz)),
         ),
       );
@@ -67,11 +104,40 @@ class MarkerService {
     print('📌 화면에 보이는 마커 수: ${visibleMarkers.length}');
   }
 
-List<business_data> getRecommendations({required int limit}) {
-  return _savedBusinesses
-      .where((biz) => biz['lat'] != null && biz['lng'] != null)
-      .take(limit)
-      .map((biz) => business_data.fromMap(biz))
-      .toList();
+  List<business_data> getRecommendations({required int limit}) {
+    return _savedBusinesses
+        .where((biz) => biz['lat'] != null && biz['lng'] != null)
+        .take(limit)
+        .map((biz) => business_data.fromMap(biz))
+        .toList();
+  }
+
+  Future<List<business_data>> getTopBusinessesByHits(int limit) async {
+  final supabase = Supabase.instance.client;
+  final hitResult = await supabase.from('business_hits').select('*');
+  final List<HitData> hits = hitResult.map((e) => HitData.fromMap(e)).toList();
+
+  // 🔁 1. bId 기준으로 조회수 합산
+  final Map<int, int> hitCountMap = {};
+  for (final hit in hits) {
+    hitCountMap.update(hit.bId, (value) => value + hit.hits, ifAbsent: () => hit.hits);
+  }
+
+  // 🔢 2. 조회수 높은 순으로 bId 정렬
+  final sortedBIds = hitCountMap.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+  final topBIds = sortedBIds.map((e) => e.key).take(limit).toList();
+
+  // 🏪 3. bId로 business_data 매칭
+  final List<business_data> topStores = [];
+  for (final bId in topBIds) {
+    final matched = _savedBusinesses.firstWhereOrNull((b) => b['id'] == bId);
+    if (matched != null) {
+      topStores.add(business_data.fromMap(matched));
+    }
+  }
+
+  return topStores;
 }
+
 }

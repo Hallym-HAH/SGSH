@@ -3,6 +3,7 @@ import 'package:app/models/business.dart';
 import 'package:app/pages/articlepage.dart';
 import 'package:app/pages/storedetail.dart';
 import 'package:app/pages/storelist.dart';
+import 'package:app/services/supabase_service.dart';
 import 'package:app/widgets/diningmagazinesection.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,12 +17,12 @@ class Mainpage extends StatefulWidget {
 
 class _MainpageState extends State<Mainpage> {
   final List<Map<String, dynamic>> items = [
-    {'emoji': '🍚', 'label': "한식"},
-    {'emoji': '🍜', 'label': "중식"},
-    {'emoji': '🍣', 'label': "일식"},
-    {'emoji': '☕', 'label': "카페"},
-    {'emoji': '🍗', 'label': "치킨"},
-    {'emoji': '🍔', 'label': "버거"},
+    {'emoji': '🥘', 'label': "한식", 'category': '한식'},
+    {'emoji': '🍜', 'label': "중식", 'category': '중식'},
+    {'emoji': '🍱', 'label': "일식", 'category': '일식'},
+    {'emoji': '☕️', 'label': "카페", 'category': '카페'},
+    {'emoji': '🍔', 'label': "버거", 'category': '버거'},
+    {'emoji': '🍽️', 'label': "기타", 'category': '기타'},
   ];
 
   // List<article_data> article = [];
@@ -32,15 +33,102 @@ class _MainpageState extends State<Mainpage> {
   final supabase = Supabase.instance.client;
   late Future<SharedPreferences> prefsFuture;
 
+  List<business_data> recommendedStores = [];
+  String userName = '';
+
   @override
   void initState() {
     super.initState();
     prefsFuture = SharedPreferences.getInstance();
     fetchStores();
-    prefsFuture.then((prefs) {
-      setState(() {});
+
+    SupabaseService().getUserProfile().then((profile) {
+      final email = profile?.email;
+      final namePart = email?.split('@')[0];
+      setState(() {
+        userName = namePart!;
+      });
+    });
+
+    fetchTopViewedStores().then((stores) {
+      setState(() {
+        recommendedStores = stores;
+      });
     });
   }
+
+  Future<List<business_data>> fetchTopViewedStores() async {
+  try {
+    final today = DateTime.now();
+    final weekAgo = today.subtract(Duration(days: 7));
+    final weekAgoStr =
+        '${weekAgo.year}-${weekAgo.month.toString().padLeft(2, '0')}-${weekAgo.day.toString().padLeft(2, '0')}';
+
+    print("🕒 조회 기준: $weekAgoStr 이후 데이터");
+
+    // 1. 최근 7일 조회수 합산
+    final response = await supabase
+        .from('business_hits')
+        .select('b_id, hits')
+        .gte('date', weekAgoStr);
+
+    print("📊 조회된 hits rows: ${response.length}");
+    for (var item in response) {
+      print("→ b_id: ${item['b_id']}, hits: ${item['hits']}");
+    }
+
+    // 2. [b_id별 합산]
+    final Map<int, int> hitsByStore = {};
+    for (var item in response) {
+      final bId = item['b_id'] as int;
+      final hits = item['hits'] as int;
+      hitsByStore[bId] = (hitsByStore[bId] ?? 0) + hits;
+    }
+
+    print("📈 합산된 조회수:");
+    hitsByStore.forEach((id, hits) {
+      print("→ 매장 $id: $hits회");
+    });
+
+    // 3. 정렬: 조회수 많은 순 + 같은 조회수는 랜덤 섞기
+    final sortedIds =
+        hitsByStore.entries.toList()
+          ..shuffle()
+          ..sort((a, b) => b.value.compareTo(a.value));
+
+    final topIds = sortedIds.take(7).map((e) => e.key).toList();
+    print("🏆 추천 매장 ID(정렬된): $topIds");
+
+    // 4. 상위 매장 정보 가져오기
+    final storesResponse = await supabase
+        .from('business_data')
+        .select()
+        .inFilter('id', topIds);
+
+    print("🏪 매장 정보 수신 완료: ${storesResponse.length}");
+
+    List<business_data> topStores =
+        storesResponse
+            .map<business_data>((data) => business_data.fromMap(data))
+            .toList();
+
+    // 5. 순서 정렬
+    topStores.sort(
+      (a, b) => topIds.indexOf(a.id!).compareTo(topIds.indexOf(b.id!)),
+    );
+
+    print("✅ 최종 추천 매장 리스트:");
+    for (var store in topStores) {
+      print("→ ${store.name} (${store.id})");
+    }
+
+    return topStores;
+  } catch (e) {
+    print("❌ 추천 매장 조회 실패: $e");
+    return [];
+  }
+}
+
 
   void fetchStores() async {
     try {
@@ -62,64 +150,160 @@ class _MainpageState extends State<Mainpage> {
     }
   }
 
+  // Future<List<business_data>> fetchRandomStores() async {
+  //   try {
+  //     final response = await supabase.from('business_data').select();
+
+  //     List<business_data> allStores =
+  //         response
+  //             .map<business_data>((data) => business_data.fromMap(data))
+  //             .toList();
+
+  //     allStores.shuffle(); // ✅ 클라이언트에서 무작위 섞기
+
+  //     return allStores.take(5).toList(); // ✅ 상위 5개만
+  //   } catch (e) {
+  //     print("❌ 랜덤 매장 불러오기 실패: $e");
+  //     return [];
+  //   }
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, // 항상 흰색 유지
-        elevation: 0.5,
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.white,
+        elevation: 0,
         centerTitle: false,
-        title: const Text(
-          '가치가게',
-          style: TextStyle(
-            fontSize: 20,
-            fontFamily: 'Pretendard',
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
+        title: Row(
+          children: [
+            Text(
+              '가치가게',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+              ),
+            ),
+            SizedBox(width: 8),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'BETA',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.orange,
+                ),
+              ),
+            ),
+          ],
         ),
-
-        foregroundColor: Colors.black, // 버튼색이 스크롤에 의해 바뀌지 않도록
-        surfaceTintColor: Colors.white, // 머티리얼 3 대응용 (앱바 배경 흐림 방지)
-        shadowColor: Colors.transparent, // 그림자 투명화(선택)
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications_outlined, color: Colors.black87),
+            onPressed: () {},
+          ),
+          SizedBox(width: 8),
+        ],
+        foregroundColor: Colors.black,
+        surfaceTintColor: Colors.white,
+        shadowColor: Colors.transparent,
       ),
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
             Article(article: bannerArticles),
             Padding(
-              padding: EdgeInsets.all(8).copyWith(top: 20),
-              child: Wrap(
-                alignment: WrapAlignment.start,
-                spacing: 8,
-                runSpacing: 12,
-                children:
-                    items.map((item) {
-                      return SizedBox(
-                        width: MediaQuery.of(context).size.width / 6 - 12,
-                        child: _buildEmojiText(
-                          item['emoji'],
-                          item['label'],
-                          context,
+              padding: EdgeInsets.all(16).copyWith(top: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '카테고리',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.grey[200]!),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 16,
+                          offset: Offset(0, 4),
                         ),
-                      );
-                    }).toList(),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: items.map((item) {
+                        return Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => StoreListPage(
+                                        category: item['category'],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      item['emoji'],
+                                      style: const TextStyle(
+                                        fontFamily: 'TossFace',
+                                        fontSize: 36,
+                                      ),
+                                    ),
+                                    SizedBox(height: 10),
+                                    Text(
+                                      item['label'],
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87,
+                                        height: 1.2,
+                                      ),
+                                      maxLines: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '최근 본 항목',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-              ),
-            ),
-
             buildRecentItems(),
-            const SizedBox(height: 20),
+            RecommendedStoreSection(
+              userName: userName.isNotEmpty ? userName : '회원',
+              stores: recommendedStores,
+            ),
             DummyArticleList(newsArticles: newsArticles),
             DiningMagazineSection(magazineArticles: magazineArticles),
           ],
@@ -139,17 +323,21 @@ class _MainpageState extends State<Mainpage> {
           return Center(child: Text("최근 본 가게가 없습니다."));
         }
 
-        List<String> recentStores =
-            snapshot.data!.getStringList('recentStores') ?? [];
+        List<String> recentIds =
+            snapshot.data!.getStringList('recentStoreIds') ?? [];
+
+        if (recentIds.isEmpty) {
+          return Center(child: Text("최근 본 가게가 없습니다."));
+        }
 
         return FutureBuilder<List<business_data>>(
           future: Future.wait(
-            recentStores.map((storeName) async {
-              var response =
+            recentIds.map((id) async {
+              final response =
                   await supabase
                       .from('business_data')
                       .select()
-                      .eq('name', storeName)
+                      .eq('id', int.parse(id))
                       .single();
               return business_data.fromMap(response);
             }),
@@ -164,111 +352,117 @@ class _MainpageState extends State<Mainpage> {
 
             final stores = snapshot.data!;
 
-            return Container(
-              height: 150,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: stores.length,
-                itemBuilder: (context, index) {
-                  final store = stores[index];
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => StoreDetailPage(store: store),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
+                  child: Text(
+                    '최근 본 매장',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Text(
+                    '최근 본 매장을 모아봤어요',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ),
+                Container(
+                  height: 190,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: stores.length,
+                    itemBuilder: (context, index) {
+                      final store = stores[index];
+                      return GestureDetector(
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => StoreDetailPage(store: store),
+                            ),
+                          );
+                          if (result == true) setState(() {}); // 돌아올 때 새로고침
+                        },
+                        child: Container(
+                          width: 180,
+                          margin: EdgeInsets.only(
+                            left: index == 0 ? 16 : 10,
+                            right: 10,
+                          ),
+                          decoration: BoxDecoration(color: Colors.white),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(20),
+                                ),
+                                child: Image.network(
+                                  store.image,
+                                  height: 120,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder:
+                                      (_, __, ___) => Container(
+                                        height: 120,
+                                        color: Colors.grey[300],
+                                        child: Icon(Icons.image),
+                                      ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      store.name,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            store.description,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },
-                    child: Container(
-                      width: 160,
-                      margin: EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 12,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(16),
-                            ),
-                            child: Image.network(
-                              store.image,
-                              height: 90,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (_, __, ___) => Container(
-                                    height: 90,
-                                    color: Colors.grey[300],
-                                    child: Icon(
-                                      Icons.store,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            child: Text(
-                              store.name,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'SF Pro Display',
-                                color: Colors.black87,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             );
           },
         );
       },
-    );
-  }
-
-  Widget _buildEmojiText(String emoji, String label, BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => StoreListPage()),
-        ).then((_) {
-          setState(() {
-            prefsFuture = SharedPreferences.getInstance();
-          });
-        });
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(emoji, style: TextStyle(fontSize: 28)),
-          SizedBox(height: 4),
-          Text(label),
-        ],
-      ),
     );
   }
 }
@@ -392,10 +586,17 @@ class DummyArticleList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.fromLTRB(16, 24, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
           child: Text(
             '가치가게 소식',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 5),
+          child: Text(
+            '가치가게 소식을 모아봤어요',
+            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
         ),
         ...newsArticles.map((article) {
@@ -435,6 +636,126 @@ class DummyArticleList extends StatelessWidget {
             },
           );
         }).toList(),
+      ],
+    );
+  }
+}
+
+class RecommendedStoreSection extends StatelessWidget {
+  final String userName;
+  final List<business_data> stores;
+
+  const RecommendedStoreSection({
+    super.key,
+    required this.userName,
+    required this.stores,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (stores.isEmpty) return SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
+          child: Text(
+            '$userName님이 좋아할 매장',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: Text(
+            '마음에 들 만한 곳을 모아봤어요',
+            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          ),
+        ),
+        SizedBox(
+          height: 190,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: stores.length,
+            itemBuilder: (context, index) {
+              final store = stores[index];
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => StoreDetailPage(store: store),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 180,
+                  margin: EdgeInsets.only(
+                    left: index == 0 ? 16 : 10,
+                    right: 10,
+                  ),
+                  decoration: BoxDecoration(color: Colors.white),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                        child: Image.network(
+                          store.image,
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (_, __, ___) => Container(
+                                height: 120,
+                                color: Colors.grey[300],
+                                child: Icon(Icons.image),
+                              ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              store.name,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    store.description,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ],
     );
   }

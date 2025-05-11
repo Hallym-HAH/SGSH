@@ -1,6 +1,7 @@
-import 'package:app/widgets/store_bottom_bar.dart';
+import 'package:app/models/business.dart';
+import 'package:app/pages/storedetail.dart';
 import 'package:flutter/material.dart';
-import '../data/dummy_reservations.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/dummy_completed_info.dart';
 
 class MyDiningPage extends StatefulWidget {
@@ -10,142 +11,222 @@ class MyDiningPage extends StatefulWidget {
 
 class _MyDiningPageState extends State<MyDiningPage> {
   int _selectedCategory = 0;
-  final List<String> categories = ['방문예정', '방문완료', '취소/노쇼'];
+  final List<String> categories = ['방문예정', '방문완료', '예약취소'];
   Map<int, int> starRatings = {}; // 각 예약 ID에 대한 별점 저장
+  final PageController _pageController = PageController();
 
-  String get currentStatus {
-    switch (_selectedCategory) {
-      case 0:
-        return 'upcoming';
-      case 1:
-        return 'completed';
-      case 2:
-        return 'canceled';
-      default:
-        return 'upcoming';
+  List<Map<String, dynamic>> reservations = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchReservations();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      _selectedCategory = index;
+    });
+  }
+
+  void _onTabTapped(int index) {
+    _pageController.animateToPage(
+      index,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  Future<void> _fetchReservations() async {
+    try {
+      final uuid = Supabase.instance.client.auth.currentUser?.id;
+      if (uuid == null) return;
+
+      final response = await Supabase.instance.client
+          .from('reserve_data')
+          .select()
+          .eq('uuid', uuid);
+
+      final List<Map<String, dynamic>> fetched =
+          List<Map<String, dynamic>>.from(response);
+
+      final enriched = await Future.wait(
+        fetched.map((reservation) async {
+          final bId = reservation['b_id'];
+
+          final business =
+              await Supabase.instance.client
+                  .from('business_data')
+                  .select()
+                  .eq('id', bId)
+                  .maybeSingle();
+
+          print(
+            '\uD83C\uDFE2 b_id: $bId -> 사업체: ${business?['name']} (${business?['id']})',
+          );
+
+          final enrichedReservation = Map<String, dynamic>.from(
+            reservation,
+          ); // ✅ 깊은 복사
+          enrichedReservation['storeName'] = business?['name'];
+          enrichedReservation['storeImage'] = business?['image'];
+          enrichedReservation['category'] = business?['category'];
+          enrichedReservation['location'] = business?['location'];
+
+          return enrichedReservation;
+        }),
+      );
+
+      print('\n✅ 최종 enriched 예약 목록:');
+      for (var r in enriched) {
+        final dDay =
+            DateTime.tryParse(r['date'])?.difference(DateTime.now()).inDays;
+        print(
+          '예약 ID: ${r['id']} | ${r['storeName']} | 날짜: ${r['date']} | D-$dDay | status: ${r['status']}',
+        );
+      }
+
+      enriched.sort((a, b) {
+        final aDate = DateTime.tryParse(a['date'] ?? '') ?? DateTime(2100);
+        final bDate = DateTime.tryParse(b['date'] ?? '') ?? DateTime(2100);
+        return aDate.compareTo(bDate);
+      });
+
+      setState(() {
+        reservations = enriched;
+      });
+    } catch (e) {
+      print('❌ 예약 가져오기 실패: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered =
-        reservations.where((r) => r['status'] == currentStatus).toList();
+    final filtered = reservations.where((r) {
+          final status = r['status'];
+          if (_selectedCategory == 0) return status == 'standby';
+          if (_selectedCategory == 1) return status == 'approve';
+          if (_selectedCategory == 2) return status == 'cancel';
+          return false;
+        }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white, // 항상 흰색 유지
-
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, // 항상 흰색 유지
-        elevation: 0.5,
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.white,
+        elevation: 0,
         centerTitle: false,
         title: const Text(
           '나의 예약',
           style: TextStyle(
-            fontSize: 20,
-            fontFamily: 'Pretendard',
+            fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Color(0xFF222222),
+            letterSpacing: -1.1,
           ),
         ),
-
-        foregroundColor: Colors.black, // 버튼색이 스크롤에 의해 바뀌지 않도록
-        surfaceTintColor: Colors.white, // 머티리얼 3 대응용 (앱바 배경 흐림 방지)
-        shadowColor: Colors.transparent, // 그림자 투명화(선택)
+        foregroundColor: Color(0xFF222222),
+        surfaceTintColor: Colors.white,
+        shadowColor: Colors.transparent,
       ),
-     
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      body: Column(
         children: [
-          // 🔻 카테고리 탭: 작대기로 선택 상태 표현
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(categories.length, (index) {
-                final bool isSelected = _selectedCategory == index;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedCategory = index;
-                    });
-                  },
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        categories[index],
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.black : Colors.grey,
+                Expanded(
+                  child: _tabPill(
+                    emoji: '⏰',
+                    label: '방문',
+                    count: reservations.where((r) => r['status'] == 'standby').length,
+                    selected: _selectedCategory == 0,
+                    color: Colors.black,
+                    onTap: () => _onTabTapped(0),
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        height: 2,
-                        width: 32,
-                        decoration: BoxDecoration(
-                          color: isSelected ? Colors.black : Colors.transparent,
-                          borderRadius: BorderRadius.circular(1),
+                SizedBox(width: 0),
+                Expanded(
+                  child: _tabPill(
+                    emoji: '✅',
+                    label: '완료',
+                    count: reservations.where((r) => r['status'] == 'approve').length,
+                    selected: _selectedCategory == 1,
+                    color: Colors.black,
+                    onTap: () => _onTabTapped(1),
+                  ),
+                ),
+                SizedBox(width: 0),
+                Expanded(
+                  child: _tabPill(
+                    emoji: '❌',
+                    label: '취소',
+                    count: reservations.where((r) => r['status'] == 'cancel').length,
+                    selected: _selectedCategory == 2,
+                    color: Colors.black,
+                    onTap: () => _onTabTapped(2),
                         ),
                       ),
                     ],
                   ),
-                );
-              }),
+          ),
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: _onPageChanged,
+              children: [
+                _buildReservationList(0),
+                _buildReservationList(1),
+                _buildReservationList(2),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
-
-          // 🔻 필터링된 카드 출력
-          if (filtered.isEmpty)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.only(top: 40),
-                child: Text(
-                  '예약 내역이 없습니다.',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ),
-            )
-          else
-            ...filtered.map((data) {
-              if (_selectedCategory == 1) {
-                return _buildCompletedCard(data);
-              } else if (_selectedCategory == 2) {
-                return _buildCanceledCard(data);
-              } else {
-                return _buildReservationCard(data);
-              }
-            }).toList(),
         ],
       ),
     );
   }
 
-  Widget _buildTopTab(String title, bool isSelected) {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isSelected ? Colors.black : Colors.grey[300]!,
-              width: 2,
-            ),
-          ),
-        ),
-        child: TextButton(
-          onPressed: () {},
-          child: Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.black : Colors.grey,
-            ),
-          ),
-        ),
-      ),
+  Widget _buildReservationList(int category) {
+    final filtered = reservations.where((r) {
+      final status = r['status'];
+      if (category == 0) return status == 'standby';
+      if (category == 1) return status == 'approve';
+      if (category == 2) return status == 'cancel';
+      return false;
+    }).toList();
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      children: [
+          if (filtered.isEmpty)
+            const Center(
+              child: Padding(
+              padding: EdgeInsets.only(top: 60),
+                child: Text(
+                  '예약 내역이 없습니다.',
+                style: TextStyle(fontSize: 15, color: Color(0xFFB0B0B0)),
+                ),
+              ),
+            )
+          else
+            ...filtered.map((data) {
+            if (category == 2) {
+                return _buildCanceledCard(data);
+              } else {
+              return category == 1
+                    ? _buildCompletedCard(data)
+                    : _buildReservationCard(data);
+              }
+            }).toList(),
+        ],
     );
   }
 
@@ -155,111 +236,282 @@ class _MyDiningPageState extends State<MyDiningPage> {
     Color textColor = Colors.white,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          if (color != Colors.transparent)
+            BoxShadow(
+              color: color.withOpacity(0.08),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+        ],
       ),
       child: Text(
         text,
         style: TextStyle(
           color: textColor,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
+  // 주소에서 시/군/구만 추출 (예: '강원 춘천시 ...' → '춘천')
+  String extractRegion(String address) {
+    final parts = address.split(' ');
+    if (parts.length >= 2) {
+      return parts[1].replaceAll(RegExp(r'시|군|구'), '');
+    }
+    return address;
+  }
+
+  // 태그 최대 2개만 출력, 없으면 빈 문자열
+  String formatTags(dynamic tags) {
+    if (tags == null) return '';
+    if (tags is String) {
+      final tagList = tags.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      if (tagList.isEmpty) return '';
+      return tagList.take(2).map((t) => '#$t').join(' ');
+    }
+    if (tags is List) {
+      if (tags.isEmpty) return '';
+      return tags.take(2).map((t) => '#$t').join(' ');
+    }
+    return '';
+  }
+
   Widget _buildReservationCard(Map<String, dynamic> data) {
-    return Card(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                if (data['status'] == 'upcoming')
-                  _buildBadge('D-${data['dday']}'),
-                const SizedBox(width: 8),
-                _buildBadge(
-                  '예약',
-                  color: Colors.grey[300]!,
-                  textColor: Colors.black,
-                ),
-                const Spacer(),
-                const Icon(Icons.calendar_today_outlined, color: Colors.red),
-              ],
+    final storeName = data['storeName'] ?? '가게 이름';
+    final imageUrl =
+        data['storeImage'] ?? 'https://example.com/default-image.png';
+    final address = data['address'] ?? '';
+    final tags = data['tags'] ?? [];
+    final region = extractRegion(address);
+    final tagStr = formatTags(tags);
+    final dateStr = data['date'] ?? '';
+    final time = data['time'] ?? '';
+    final count = data['count']?.toString() ?? '0';
+    final businessId = data['b_id'];
+
+    final now = DateTime.now();
+    final date = DateTime.tryParse(dateStr);
+    final dDay = (date != null) ? date.difference(now).inDays : null;
+
+    return GestureDetector(
+      onTap: () async {
+        final business =
+            await Supabase.instance.client
+                .from('business_data')
+                .select()
+                .eq('id', businessId)
+                .maybeSingle();
+
+        if (business != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (_) =>
+                      StoreDetailPage(store: business_data.fromMap(business)),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.asset(
-                    data['image'],
-                    width: 55,
-                    height: 70,
-                    fit: BoxFit.cover,
+          );
+
+          await _fetchReservations();
+        } else {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('가게 정보를 불러올 수 없습니다.')));
+        }
+      },
+      child: Card(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Color(0xFFF0F0F0), width: 1),
+        ),
+        elevation: 2,
+        shadowColor: Colors.black.withOpacity(0.06),
+        margin: const EdgeInsets.only(bottom: 24),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  if (dDay != null) _buildBadge('D-$dDay', color: Colors.red),
+                  const SizedBox(width: 6),
+                  _buildBadge(
+                    '예약',
+                    color: Colors.grey[200]!,
+                    textColor: Colors.black,
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        data['storeName'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                  const Spacer(),
+                  if (data['status'] == 'standby')
+                    OutlinedButton(
+                      onPressed: () async {
+                        final result = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            title: Text(
+                              '예약 취소',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            content: Text(
+                              '정말 예약을 취소하시겠습니까?',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 15,
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: Text(
+                                  '아니오',
+                                  style: TextStyle(
+                                    color: Colors.black54,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: Text(
+                                  '예',
+                                  style: TextStyle(
+                                    color: Color(0xFFE53935),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (result == true) {
+                          await Supabase.instance.client
+                              .from('reserve_data')
+                              .update({'status': 'cancel'})
+                              .eq('id', data['id']);
+                          await _fetchReservations();
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Color(0xFFE53935),
+                        side: BorderSide(color: Color(0xFFE53935)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        minimumSize: Size(0, 24),
+                        textStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${data['category']} · ${data['location']}',
-                        style: const TextStyle(color: Colors.grey),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.cancel, size: 12, color: Color(0xFFE53935)),
+                          SizedBox(width: 2),
+                          Text('예약 취소', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${data['date']} (${data['dayOfWeek']}) · ${data['time']} · ${data['people']}명',
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.w600,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      imageUrl,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (_, __, ___) => Container(
+                            width: 60,
+                            height: 60,
+                            color: Colors.grey[200],
+                            child: Icon(Icons.image, color: Colors.grey),
+                          ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          storeName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          tagStr.isNotEmpty ? '$region · $tagStr' : region,
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '$dateStr · $time · $count명',
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD1D1D6), width: 1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.black12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  foregroundColor: Colors.black,
-                ),
-                child: const Text(
-                  '초대장 보내기',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w600,
+                  child: const Text(
+                    '초대장 보내기',
+                    style: TextStyle(color: Colors.black),
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              Center(
+                child: Text(
+                  '방문을 잊지 마세요!',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -269,23 +521,49 @@ class _MyDiningPageState extends State<MyDiningPage> {
     final int id = data['id'];
     final completedInfo = completedInfos[id] ?? {};
     final int visitCount = completedInfo['visitCount'] ?? 1;
+    final businessId = data['b_id'];
+    final address = data['address'] ?? '';
+    final tags = data['tags'] ?? [];
+    final region = extractRegion(address);
+    final tagStr = formatTags(tags);
 
-    return Card(
+    return GestureDetector(
+      onTap: () async {
+        final business = await Supabase.instance.client
+            .from('business_data')
+            .select()
+            .eq('id', businessId)
+            .maybeSingle();
+
+        if (business != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StoreDetailPage(store: business_data.fromMap(business)),
+            ),
+          );
+        }
+      },
+      child: Card(
       color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Color(0xFFF0F0F0), width: 1),
+        ),
       elevation: 2,
-      margin: const EdgeInsets.only(bottom: 16),
+        shadowColor: Colors.black.withOpacity(0.06),
+        margin: const EdgeInsets.only(bottom: 24),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 _buildBadge(
-                  '예약',
-                  color: const Color.fromARGB(255, 243, 243, 243),
-                  textColor: Colors.black,
+                    '완료',
+                    color: Color(0xFF43A047),
+                    textColor: Colors.white,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -297,52 +575,54 @@ class _MyDiningPageState extends State<MyDiningPage> {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.asset(
-                    data['image'],
-                    width: 55,
-                    height: 70,
-                    fit: BoxFit.cover,
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      data['storeImage'] ?? '',
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 60,
+                        height: 60,
+                        color: Colors.grey[200],
+                        child: Icon(Icons.image, color: Colors.grey),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        data['storeName'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+            Text(
+              data['storeName'] ?? '가게 이름',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 4),
+                        Text(
+                          tagStr.isNotEmpty ? '$region · $tagStr' : region,
+                          style: const TextStyle(color: Colors.grey, fontSize: 13),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${data['category']} · ${data['location']}',
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${data['date']} (${data['dayOfWeek']}) · ${data['time']} · ${data['people']}명',
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
+              const SizedBox(height: 12),
+            Text(
+              '${data['date']} · ${data['time']} · ${data['count']}명',
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const Divider(
               height: 24,
               color: Color.fromARGB(255, 229, 229, 229),
             ),
-            const SizedBox(height: 8),
             const Center(
               child: Text(
                 '별점으로 평가해주세요',
@@ -376,19 +656,47 @@ class _MyDiningPageState extends State<MyDiningPage> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildCanceledCard(Map<String, dynamic> data) {
-    return Card(
+    final businessId = data['b_id'];
+    final address = data['address'] ?? '';
+    final tags = data['tags'] ?? [];
+    final region = extractRegion(address);
+    final tagStr = formatTags(tags);
+    
+    return GestureDetector(
+      onTap: () async {
+        final business = await Supabase.instance.client
+            .from('business_data')
+            .select()
+            .eq('id', businessId)
+            .maybeSingle();
+
+        if (business != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StoreDetailPage(store: business_data.fromMap(business)),
+            ),
+          );
+        }
+      },
+      child: Card(
       color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Color(0xFFF0F0F0), width: 1),
+        ),
       elevation: 2,
-      margin: const EdgeInsets.only(bottom: 16),
+        shadowColor: Colors.black.withOpacity(0.06),
+        margin: const EdgeInsets.only(bottom: 24),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -408,11 +716,18 @@ class _MyDiningPageState extends State<MyDiningPage> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
-                  child: Image.asset(
-                    data['image'],
+                  child: Image.network(
+                    data['storeImage'] ?? '',
                     width: 55,
                     height: 70,
                     fit: BoxFit.cover,
+                    errorBuilder:
+                        (_, __, ___) => Container(
+                          width: 55,
+                          height: 70,
+                          color: Colors.grey[300],
+                          child: Icon(Icons.image, color: Colors.grey),
+                        ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -429,12 +744,12 @@ class _MyDiningPageState extends State<MyDiningPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${data['category']} · ${data['location']}',
+                        tagStr.isNotEmpty ? '$region · $tagStr' : region,
                         style: const TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${data['date']} (${data['dayOfWeek']}) · ${data['time']} · ${data['people']}명',
+                        '${data['date']} · ${data['time']} · ${data['count']}명',
                         style: const TextStyle(
                           color: Colors.grey,
                           fontWeight: FontWeight.w600,
@@ -456,6 +771,63 @@ class _MyDiningPageState extends State<MyDiningPage> {
               child: const Text(
                 '사정이 생겨 방문하지 못했어요',
                 style: TextStyle(color: Colors.black54),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tabPill({
+    required String emoji,
+    required String label,
+    required int count,
+    required bool selected,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  emoji,
+                  style: TextStyle(
+                    fontFamily: 'TossFace',
+                    fontSize: 16,
+                    color: selected ? color : Colors.grey,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  '$label $count',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: selected ? color : Colors.grey,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            AnimatedContainer(
+              duration: Duration(milliseconds: 200),
+              curve: Curves.ease,
+              width: 32,
+              height: 2,
+              decoration: BoxDecoration(
+                color: selected ? color : Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
           ],

@@ -33,8 +33,7 @@ class _StoreDetailPageState extends State<StoreDetailPage>
   late TabController _tabController;
   bool isBookmarked = false;
   bool showTitle = false;
-static const String bookmarkKey = 'bookmarkedStores';
-
+  static const String bookmarkKey = 'bookmarkedStores';
 
   void fetchStoreArticles() async {
     try {
@@ -58,26 +57,60 @@ static const String bookmarkKey = 'bookmarkedStores';
     }
   }
 
+  void updateTodayHits() async {
+  final today = DateTime.now();
+  final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+  try {
+    // 이미 있는지 확인
+    final existing = await supabase
+        .from('business_hits')
+        .select()
+        .eq('b_id', widget.store.id)
+        .eq('date', todayStr)
+        .maybeSingle();
+
+    if (existing != null) {
+      // 이미 있으면 hits + 1
+      await supabase
+          .from('business_hits')
+          .update({'hits': (existing['hits'] ?? 0) + 1})
+          .eq('id', existing['id']);
+      print('✅ 오늘 조회수 +1');
+    } else {
+      // 없으면 새로 생성
+      await supabase.from('business_hits').insert({
+        'b_id': widget.store.id,
+        'date': todayStr,
+        'hits': 1,
+      });
+      print('✅ 첫 방문 기록됨');
+    }
+  } catch (e) {
+    print("❌ 조회수 업데이트 실패: $e");
+  }
+}
+
+
   void toggleBookmark() async {
-  await BookmarkService.toggleBookmark(widget.store.id.toString());
-  await checkBookmarkStatus(); // 북마크 상태를 정확히 다시 읽어옴
+    await BookmarkService.toggleBookmark(widget.store.id.toString());
+    await checkBookmarkStatus(); // 북마크 상태를 정확히 다시 읽어옴
 
-  print(
-    isBookmarked
-        ? "🔖 북마크 추가됨: ${widget.store.name}"
-        : "❌ 북마크 해제됨: ${widget.store.name}",
-  );
-}
+    print(
+      isBookmarked
+          ? "🔖 북마크 추가됨: ${widget.store.name}"
+          : "❌ 북마크 해제됨: ${widget.store.name}",
+    );
+  }
 
-Future<void> checkBookmarkStatus() async {
-  final isMarked = await BookmarkService.isBookmarked(widget.store.id.toString());
-  setState(() {
-    isBookmarked = isMarked;
-  });
-}
-
-
-
+  Future<void> checkBookmarkStatus() async {
+    final isMarked = await BookmarkService.isBookmarked(
+      widget.store.id.toString(),
+    );
+    setState(() {
+      isBookmarked = isMarked;
+    });
+  }
 
   void shareStore() {
     showModalBottomSheet(
@@ -138,41 +171,41 @@ Future<void> checkBookmarkStatus() async {
 
   final ScrollController _scrollController = ScrollController();
 
- @override
-void initState() {
-  super.initState();
-  _tabController = TabController(length: 2, vsync: this);
-  prefsFuture = SharedPreferences.getInstance();
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    prefsFuture = SharedPreferences.getInstance();
 
-  _scrollController.addListener(() {
-    if (_scrollController.offset > 150 && !showTitle) {
-      setState(() => showTitle = true);
-    } else if (_scrollController.offset <= 150 && showTitle) {
-      setState(() => showTitle = false);
-    }
-  });
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 150 && !showTitle) {
+        setState(() => showTitle = true);
+      } else if (_scrollController.offset <= 150 && showTitle) {
+        setState(() => showTitle = false);
+      }
+    });
 
-  fetchMenuData();
-  fetchStoreArticles(); // ✅ 여기!
-  saveToRecentStores(widget.store.name);
-    checkBookmarkStatus(); // ✅ 여기!
+    fetchMenuData();
+    fetchStoreArticles();
+    saveToRecentStores(widget.store.id); // ✅ 변경된 부분
+    checkBookmarkStatus();
+      updateTodayHits(); // ✅ 이거 꼭 호출하기
 
-}
+  }
 
-
-
-
-
-  void saveToRecentStores(String storeName) async {
+  void saveToRecentStores(int storeId) async {
     final prefs = await prefsFuture;
-    List<String> recentStores = prefs.getStringList('recentStores') ?? [];
-    recentStores.remove(storeName);
-    recentStores.insert(0, storeName);
-    if (recentStores.length > 5) {
-      recentStores = recentStores.sublist(0, 5);
+    List<String> recentIds = prefs.getStringList('recentStoreIds') ?? [];
+
+    final idStr = storeId.toString();
+    recentIds.remove(idStr); // 중복 제거
+    recentIds.insert(0, idStr); // 최신순 정렬
+    if (recentIds.length > 5) {
+      recentIds = recentIds.sublist(0, 5); // 최대 5개까지만 유지
     }
-    await prefs.setStringList('recentStores', recentStores);
-    print("✅ 최근 본 가게 업데이트 완료: $recentStores");
+
+    await prefs.setStringList('recentStoreIds', recentIds);
+    print("✅ 최근 본 가게 ID 목록: $recentIds");
   }
 
   void fetchMenuData() async {
@@ -220,6 +253,43 @@ void initState() {
     );
   }
 
+  void _callStore(String phoneNumber) async {
+    print('[DEBUG] 원본 전화번호: $phoneNumber');
+    
+    // 전화번호 형식 정제 (캐치테이블 스타일)
+    String cleaned = phoneNumber;
+    
+    // 1. 한글, 특수문자 제거
+    cleaned = cleaned.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    // 2. 지역번호 처리 (02 -> 02, 나머지 -> 0)
+    if (cleaned.startsWith('02')) {
+      cleaned = '02' + cleaned.substring(2);
+    } else if (cleaned.length >= 10) {
+      cleaned = '0' + cleaned;
+    }
+    
+    print('[DEBUG] 정제된 전화번호: $cleaned');
+    
+    if (cleaned.isEmpty || cleaned.length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('유효한 전화번호가 없습니다.')),
+      );
+      return;
+    }
+    
+    final Uri url = Uri(scheme: 'tel', path: cleaned);
+    print('[DEBUG] tel url: $url');
+    
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('전화를 걸 수 없습니다.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -230,17 +300,22 @@ void initState() {
       ),
       child: Scaffold(
         bottomNavigationBar: StoreBottomBar(
-          bookmarkCount: 5012,
+          isBookmarked: isBookmarked,
           onReservePressed: () {
-            // 예약하기 눌렀을 때
-            showReservationBottomSheet(context);
+            showReservationBottomSheet(
+              context,
+              storeName: widget.store.name,
+              storeId: widget.store.id,
+            );
           },
           onCallPressed: () {
-            // 전화 버튼 눌렀을 때
-            print("전화 클릭!");
+            _callStore(widget.store.number);
           },
-          onBookmarkPressed: () {},
+          onBookmarkToggle: (newState) async {
+            toggleBookmark(); // ✅ 내부에서 상태 변경
+          },
         ),
+
         backgroundColor: Colors.white,
         body: Stack(
           children: [
@@ -254,18 +329,22 @@ void initState() {
                     backgroundColor: Colors.white,
                     scrolledUnderElevation: 0,
                     elevation: 0,
-                    leading: Padding(
-                      padding: EdgeInsets.only(left: 16),
-                      child: _circleIconButton(
-                        icon: Icons.arrow_back_ios_new,
-                        onTap: () => Navigator.pop(context),
+                    leading: Center(
+                      // ← Center로 감싸주기!
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 12), // 적당한 좌측 여백
+                        child: _circleIconButton(
+                          icon: Icons.arrow_back_ios_new,
+                          onTap: () => Navigator.pop(context, true),
+                        ),
                       ),
                     ),
+
                     actions: [
                       _circleIconButton(
                         icon: Icons.home,
                         onTap: () {
-                          Navigator.popUntil(context, (route) => route.isFirst);
+                          Navigator.pop(context, true);
                         },
                       ),
                       _circleIconButton(
@@ -361,6 +440,19 @@ void initState() {
   }
 
   Widget buildStoreHeader() {
+    // 주소에서 시/군/구만 추출 (예: '강원 춘천시 ...' → '춘천')
+    String extractRegion(String address) {
+      final parts = address.split(' ');
+      if (parts.length >= 2) {
+        // 두 번째(시/군/구)만 추출
+        return parts[1].replaceAll(RegExp(r'시|군|구'), '');
+      }
+      return address;
+    }
+    final region = extractRegion(widget.store.address);
+    // 태그 최대 2개만 출력
+    final tags = widget.store.tags.take(2).toList();
+
     return Padding(
       padding: EdgeInsets.only(right: 16.0, left: 16.0, top: 16.0, bottom: 5),
       child: Column(
@@ -369,23 +461,49 @@ void initState() {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '춘천 | 파스타',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontFamily: 'pretendard',
-                  fontWeight: FontWeight.w100,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      region,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    if (tags.isNotEmpty) ...[
+                      Text(' | ', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                      ...tags.map((tag) => Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Text(
+                          '#$tag',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.deepOrange,
+                          ),
+                        ),
+                      )),
+                    ]
+                  ],
                 ),
               ),
               linkbutton(),
             ],
           ),
+          SizedBox(height: 8),
           Text(
             widget.store.name,
             style: TextStyle(
-              fontFamily: 'Pretendard',
-              fontSize: 25,
+              fontSize: 24,
               fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
             ),
           ),
           SizedBox(height: 2),
@@ -401,7 +519,6 @@ void initState() {
                 "4.7",
                 style: TextStyle(
                   fontSize: 16,
-                  fontFamily: 'pretendard',
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -411,7 +528,6 @@ void initState() {
           Text(
             widget.store.description,
             style: TextStyle(
-              fontFamily: 'Pretendard',
               fontSize: 15,
               fontWeight: FontWeight.w300,
             ),
@@ -481,98 +597,97 @@ void initState() {
   }
 
   Widget buildHomeTab() {
-  if (storeArticles.isEmpty) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Text("이 가게에 등록된 아티클이 없습니다."),
-      ),
-    );
-  }
-
-  return ListView.builder(
-    padding: EdgeInsets.all(16),
-    itemCount: storeArticles.length,
-    itemBuilder: (context, index) {
-      final article = storeArticles[index];
-      return Container(
-        margin: EdgeInsets.only(bottom: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
-          ],
-          border: Border.all(color: Colors.grey.shade200),
-        ),
+    if (storeArticles.isEmpty) {
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.campaign, color: Colors.orange, size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      article.title,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12),
-              Text(
-                article.content,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  height: 1.5,
-                ),
-              ),
-              SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.person, size: 14, color: Colors.grey),
-                      SizedBox(width: 4),
-                      Text(
-                        article.author,
-                        style: TextStyle(fontSize: 12, color: Colors.black54),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, size: 14, color: Colors.grey),
-                      SizedBox(width: 4),
-                      Text(
-                        article.time,
-                        style: TextStyle(fontSize: 12, color: Colors.black45),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
+          padding: const EdgeInsets.all(32),
+          child: Text("이 가게에 등록된 아티클이 없습니다."),
         ),
       );
-    },
-  );
-}
+    }
 
+    return ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: storeArticles.length,
+      itemBuilder: (context, index) {
+        final article = storeArticles[index];
+        return Container(
+          margin: EdgeInsets.only(bottom: 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.campaign, color: Colors.orange, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        article.title,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+                Text(
+                  article.content,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                    height: 1.5,
+                  ),
+                ),
+                SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.person, size: 14, color: Colors.grey),
+                        SizedBox(width: 4),
+                        Text(
+                          article.author,
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time, size: 14, color: Colors.grey),
+                        SizedBox(width: 4),
+                        Text(
+                          article.time,
+                          style: TextStyle(fontSize: 12, color: Colors.black45),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Widget buildMenuTab(List<menu_data> menus) {
     if (menus.isEmpty) {
@@ -672,22 +787,6 @@ void initState() {
                                 color: Colors.grey[200],
                                 child: Icon(Icons.image, color: Colors.grey),
                               ),
-                        ),
-                        Positioned(
-                          bottom: 4,
-                          right: 4,
-                          child: Container(
-                            padding: EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.black45,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.shopping_cart_outlined,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
                         ),
                       ],
                     ),
