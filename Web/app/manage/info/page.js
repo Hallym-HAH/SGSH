@@ -19,7 +19,8 @@ export default function ManageInfo() {
         name: "",
         address: "",
         time: "",
-        description: ""
+        description: "",
+        tags: "",
     });
     const [photoToAddList, setPhotoToAddList] = useState([]);
 
@@ -41,7 +42,8 @@ export default function ManageInfo() {
                     name: data[0].name,
                     address: data[0].address,
                     time: data[0].time,
-                    description: data[0].description
+                    description: data[0].description,
+                    tags: data[0].tags
                 })
                 setPhotoToAddList(data[0].image);
                 setIsLoading(false)
@@ -74,6 +76,7 @@ export default function ManageInfo() {
                 address: updateBusiness.address,
                 time: updateBusiness.time,
                 description: updateBusiness.description,
+                tags: updateBusiness.tags
             })
             .eq("id", userData.b_id);
         if (data) {
@@ -117,11 +120,11 @@ export default function ManageInfo() {
     const photoToAddPreview = () => {
         return (
             <Image
-                className="h-60"
+                className="w-full rounded-xl mt-2"
                 src={photoToAddList}
                 alt={''}
-                width={500}
-                height={500}
+                width={100}
+                height={100}
                 style={{ objectFit: "cover" }}>
             </Image>
 
@@ -139,54 +142,61 @@ export default function ManageInfo() {
 
     return (
         <Manage>
-            <div className="p-4">
 
-                <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
-
-                    {isLoading ?
-                        <div className="flex flex-row mx-auto my-20 md:-my-20 h-screen justify-center md:items-center">
-                            <div className="w-40 h-40 rounded-full animate-spin 
+            {isLoading ?
+                <div className="flex flex-row mx-auto my-20 md:-my-20 h-screen justify-center md:items-center">
+                    <div className="w-40 h-40 rounded-full animate-spin 
                             border-2 border-solid border-blue-500 border-t-transparent"></div>
-                        </div>
-                        :
-                        <div className="min-[1450px]:flex p-6">
+                </div>
+                :
+                <div className="min-[1000px]:flex px-[30px] py-[40px]">
 
-                            <div className="lg:min-w-xl p-6 border-2 border-[#e4e7ec] rounded-2xl bg-white">
-                                <h2 className="mb-5 font-bold text-xl text-3xl mb-2 text-black">가게 정보</h2>
+                    <div className="md:min-w-[450px] py-6 rounded-xl bg-white">
+                        <h2 className="mb-5 font-bold text-xl text-3xl mb-2 text-black pb-4 px-6 border-b-2 border-[#f4f5fa]">가게 정보</h2>
 
-                                <div>
-                                    {business != null && business.length == 1 ?
-                                        <div key={business.id}>
+                        <div className="px-6">
+                            {business != null && business.length == 1 ?
+                                <div key={business.id} className="flex flex-col h-full justify-between">
+                                    <div>
+                                        <p className="mt-5 text-sm font-semibold text-[#344054]" >가게 이름</p>
+                                        <input type="text" name="name" onChange={handleInputChange} defaultValue={updateBusiness.name} placeholder="카페 이름" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
 
-                                            <p className="mt-5 text-sm font-semibold text-[#344054]" >가게 이름</p>
-                                            <input type="text" name="name" onChange={handleInputChange} defaultValue={updateBusiness.name} placeholder="카페 이름" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
+                                        <p className="mt-5 text-sm font-semibold text-[#344054]" >가게 주소</p>
+                                        <input type="text" name="address" onChange={handleInputChange} defaultValue={updateBusiness.address} placeholder="카페 이름" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
 
-                                            <p className="mt-5 text-sm font-semibold text-[#344054]" >가게 주소</p>
-                                            <input type="text" name="address" onChange={handleInputChange} defaultValue={updateBusiness.address} placeholder="카페 이름" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
+                                        <p className="mt-5 text-sm font-semibold text-[#344054]" >영업 시간</p>
+                                        <input type="text" name="time" onChange={handleInputChange} defaultValue={updateBusiness.time} placeholder="영업 시간" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
 
-                                            <p className="mt-5 text-sm font-semibold text-[#344054]" >영업 시간</p>
-                                            <input type="text" name="time" onChange={handleInputChange} defaultValue={updateBusiness.time} placeholder="영업 시간" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
+                                        <p className="mt-5 text-sm font-semibold text-[#344054]" >가게 소개</p>
+                                        <input type="text" name="description" onChange={handleInputChange} defaultValue={updateBusiness.description} placeholder="가게 소개" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
 
-                                            <p className="mt-5 text-sm font-semibold text-[#344054]" >가게 소개</p>
-                                            <input type="text" name="description" onChange={handleInputChange} defaultValue={updateBusiness.description} placeholder="가게 소개" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
-
-                                            <div className="flex justify-center md:justify-start items-center">
-                                                <button type="button"
-                                                    onClick={updateInfo}
-                                                    className="mt-5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-7 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">저장</button>
-                                            </div>
-                                        </div>
-
-                                        :
-                                        <p>로딩 에러</p>
-                                    }
+                                        <p className="mt-5 text-sm font-semibold text-[#344054]" >태그 추가</p>
+                                        <input type="text" name="tags" onChange={handleInputChange} defaultValue={updateBusiness.tags} placeholder="가게 소개" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
+                                        <p className="mt-2 text-xs font-normal text-slate-600">- 띄어쓰기 없이 쉼표로 태그를 구분해 주세요.</p>
+                                        <p className="mt-1 text-xs font-normal text-slate-600">- 예시) 양식, 데이트, 코스요리</p>
+                                    </div>
+                                    <div className="flex justify-center md:justify-start items-center">
+                                        <button type="button"
+                                            onClick={updateInfo}
+                                            className="mt-5 text-white bg-[#4c6ef8] hover:bg-[#3d62f5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-7 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">저장</button>
+                                    </div>
                                 </div>
 
-                            </div>
-                            <div className="min-[1450px]:min-w-xl mt-4 min-[1450px]:mt-0 min-[1450px]:ml-4 p-6 border-2 border-[#e4e7ec] rounded-2xl bg-white">
-                                <h2 className="mb-5 font-bold text-xl text-3xl mb-2 text-black">이미지 정보</h2>
+                                :
+                                <p>로딩 에러</p>
+                            }
+                        </div>
+                    </div>
+
+
+                    <div className="flex flex-col justify-between min-[1000px]:min-w-[500px] mt-4 min-[1000px]:mt-0 min-[1000px]:ml-4 py-6 rounded-xl bg-white">
+                        <div>
+                            <h2 className="mb-5 font-bold text-xl text-3xl mb-2 text-black pb-4 px-6 border-b-2 border-[#f4f5fa]">이미지 정보</h2>
+                        </div>
+                        <div className="flex flex-col h-full justify-between">
+                            <div>
                                 {business != null && business.length == 1 ?
-                                    <div key={business.id}>
+                                    <div key={business.id} className="px-6">
                                         <p className="text-sm font-medium text-gray-900" >대표 이미지</p>
                                         {photoToAddPreview()}
 
@@ -195,17 +205,17 @@ export default function ManageInfo() {
                                     :
                                     <p>로딩 에러</p>
                                 }
-                                <div className="flex justify-center md:justify-start items-center">
-                                    <button type="button"
-                                        onClick={updateInfo}
-                                        className="mt-5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-7 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">저장</button>
-                                </div>
                             </div>
+                            <div className="flex justify-center px-6 md:justify-start items-center">
+                                <button type="button"
+                                    onClick={updateInfo}
+                                    className="mt-5 text-white bg-[#4c6ef8] hover:bg-[#3d62f5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-7 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">저장</button>
+                            </div>
+                        </div>
+                    </div>
 
-                        </div>}
+                </div>}
 
-                </div>
-            </div>
         </Manage>
     )
 }
