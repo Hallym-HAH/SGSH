@@ -11,7 +11,6 @@ import Head from 'next/head';
 import { Noto_Sans_KR, Nanum_Gothic, IBM_Plex_Sans_KR, Black_Han_Sans, Jua } from 'next/font/google';
 import { supabaseClient } from "@/lib/supabase";
 
-
 // 폰트 설정
 const notoSansKr = Noto_Sans_KR({
     subsets: ['latin'],
@@ -128,7 +127,7 @@ export default function ThumbnailGenerator() {
     const [editMode, setEditMode] = useState([false, false]);
 
     // 메뉴 이미지 개수 관련 상태 (제거예정)
-    const [presetImageCount, setPresetImageCount] = useState(4);
+    const [presetImageCount, setPresetImageCount] = useState(8);
 
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
@@ -622,7 +621,7 @@ export default function ThumbnailGenerator() {
                 <link rel="stylesheet" href="/fonts/fonts.css" />
             </Head>
 
-            <Script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" strategy="beforeInteractive" />
+            <Script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" strategy="afterInteractive" />
 
             <div className="p-4">
                 <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
@@ -848,17 +847,17 @@ const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, pr
                 <p className="mt-2 text-sm text-gray-500">{image.name}</p>
             </div>
 
-            {/* 체크박스 스타일이지만 라디오 버튼처럼 동작하는 메뉴 이미지 선택 (flex 사용) */}
+            {/* 체크박스 스타일이지만 라디오 버튼처럼 동작하는 메뉴 이미지 선택 (좌우 스크롤) */}
             <div className="mt-6">
                 <label className="block text-gray-700 font-medium mb-2">메뉴 이미지 선택</label>
-                <div className="flex flex-wrap justify-between">
+                <div className="flex overflow-x-auto pb-4 space-x-4" style={{scrollbarWidth: 'thin'}}>
                     {presetImages.map((imgSrc, index) => (
                         <div
                             key={index}
-                            className={`aspect-square relative overflow-hidden rounded-lg border-2 transition-all cursor-pointer w-[23%] mb-4
-                ${selectedPresetIndex === index
-                                    ? 'bg-indigo-50 border-indigo-300'
-                                    : 'bg-white border-gray-200 hover:border-indigo-500'}`}
+                            className={`aspect-square relative overflow-hidden rounded-lg border-2 transition-all cursor-pointer flex-shrink-0 w-24 h-24 
+          ${selectedPresetIndex === index
+                                ? 'bg-indigo-50 border-indigo-300'
+                                : 'bg-white border-gray-200 hover:border-indigo-500'}`}
                             onClick={() => handleImageSelect(imgSrc, index)}
                             role="radio"
                             aria-checked={selectedPresetIndex === index}
@@ -871,14 +870,14 @@ const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, pr
                             />
                             <div className="absolute top-2 right-2">
                                 <div className={`h-5 w-5 rounded-full flex items-center justify-center border
-                  ${selectedPresetIndex === index
-                                        ? 'bg-indigo-600 border-indigo-600'
-                                        : 'bg-white border-gray-300'}`}>
+            ${selectedPresetIndex === index
+                                    ? 'bg-indigo-600 border-indigo-600'
+                                    : 'bg-white border-gray-300'}`}>
                                     {selectedPresetIndex === index && (
                                         <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd"
-                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                clipRule="evenodd" />
+                                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                  clipRule="evenodd"/>
                                         </svg>
                                     )}
                                 </div>
@@ -887,6 +886,7 @@ const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, pr
                     ))}
                 </div>
             </div>
+
         </motion.div>
     );
 };
