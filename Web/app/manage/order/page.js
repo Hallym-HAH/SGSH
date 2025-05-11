@@ -164,12 +164,12 @@ export default function ManageOrder() {
                         </div>
                         :
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
-                            {orders.length == 0 &&
+                            {(orders === null || orders.length === 0) &&
                                 <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 text-center mt-4">
                                     <p className="text-xl font-semibold mb-4">주문 데이터가 없습니다</p>
                                 </div>
                             }
-                            {orders.length != 0 && orders.map((order) => {
+                            {orders && orders.length != 0 && orders.map((order) => {
                                 var tmpName = order.name.split(",");
                                 var tmpPrice = order.price.split(",");
                                 var tmpCount = order.count.split(",");
