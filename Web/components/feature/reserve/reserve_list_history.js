@@ -1,65 +1,65 @@
-import React, { useEffect, useState } from 'react';
-import { supabaseClient } from '@/lib/supabase';
+import React from 'react';
+import { FaUserFriends, FaComment, FaCalendarCheck, FaHistory, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
-export default function ReserveListHistory() {
-    const [reserved, setReserved] = useState([]);
-    const [users, setUsers] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchDate = async () => {
-            const { data: { user } } = await supabaseClient.auth.getUser()
-            if (user) {
-                const { data: u_data } = await supabaseClient.from('profile_data').select(`*`).eq('id', user.id).single();
-                var b_id = u_data.b_id;
-
-                const { data: reserveData } = await supabaseClient.from('reserve_data').select(`*`).eq('b_id', b_id).order("date", { ascending: true }).order("time", { ascending: true });
-                setReserved(reserveData);
-                var temp = [];
-                reserveData.map((reserve, index) => {
-                    temp.push(reserve.uuid);
-                });
-                const { data: userData } = await supabaseClient.from('profile_data').select(`*`).in('id', temp);
-                setUsers(userData);
-                setIsLoading(false);
-            }
-        }
-        fetchDate()
-    }, []);
-
+export default function ReserveListHistory({ reservations, selectedMM, selectedDD }) {
     return (
-        <div>
-            {
-                isLoading ?
-                    <div className="flex flex-row mx-auto my-20 md:-my-20 h-screen justify-center md:items-center">
-                        <div className="w-40 h-40 rounded-full animate-spin 
-                            border-2 border-solid border-blue-500 border-t-transparent"></div>
-                    </div>
-                    :
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {
-                            reserved != null && reserved.length > 0 ? reserved.map((reserve, index) => (
-                                <div key={index} className={`flex w-full border rounded-lg my-2 ${reserve.status == "cancel" ? "border-red-300" : reserve.status == "approve" && "border-green-300"}`}>
+        <>
+            {reservations.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {reservations.map((reserve) => {
+                        const statusColor =
+                            reserve.status === "approve" ? "green" :
+                                reserve.status === "cancel" ? "red" : "blue";
 
-                                    <div className="flex flex-col w-full">
-                                        <div className="flex w-full">
-                                            <div className="flex flex-col w-full ml-2 my-4">
-                                                <p className="font-normal mt-1">예약 인원 - {reserve.count}명</p>
-                                                <p className="font-normal mt-1">예약 시간 - {reserve.date.replaceAll('-', '.') + " " + reserve.time}</p>
-                                                <p className="font-normal mt-1">예약 시간 - {reserve.r_time.replaceAll('-', '.')}</p>
-                                                {/* <p className="font-normal mt-1">예약자 - {users.filter((user) => user.id == reserve.uuid).map((user) => user.name)}</p> */}
-                                                <p className="font-normal mt-1">코멘트 - {reserve.comment}</p>
-                                            </div>
+                        const statusText =
+                            reserve.status === "approve" ? "승인됨" :
+                                reserve.status === "cancel" ? "취소됨" : "대기중";
+
+                        const StatusIcon =
+                            reserve.status === "approve" ? FaCheckCircle :
+                                reserve.status === "cancel" ? FaTimesCircle : FaCalendarCheck;
+
+                        return (
+                            <div
+                                key={reserve.id}
+                                className={`bg-white border border-${statusColor}-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all`}
+                            >
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`p-2 bg-${statusColor}-100 rounded-lg`}>
+                                            <StatusIcon className={`h-4 w-4 text-${statusColor}-600`} />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-semibold text-slate-800">예약 #{reserve.id}</span>
+                                            <span className="text-xs text-slate-500">{reserve.time}</span>
                                         </div>
                                     </div>
+                                    <span className={`px-2 py-1 bg-${statusColor}-100 text-${statusColor}-700 text-xs font-medium rounded-full`}>
+                                        {statusText}
+                                    </span>
                                 </div>
-                            )) :
-                                <div className='flex flex-col h-[70vh] justify-center'>
-                                    <p className=''>예약된 정보가 없습니다.</p>
+
+                                <div className="space-y-2">
+                                    <div className="flex items-center text-sm">
+                                        <FaUserFriends className="h-4 w-4 text-slate-400 mr-2" />
+                                        <span className="text-slate-600">{reserve.count}명</span>
+                                    </div>
+                                    <div className="flex items-start text-sm">
+                                        <FaComment className="h-4 w-4 text-slate-400 mr-2 mt-1" />
+                                        <span className="text-slate-600 flex-1">{reserve.comment || "요청사항 없음"}</span>
+                                    </div>
                                 </div>
-                        }
-                    </div>
-            }
-        </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="text-center py-12 bg-slate-50 rounded-xl">
+                    <FaHistory className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500 text-lg mb-2">예약 기록이 없습니다</p>
+                    <p className="text-slate-400 text-sm">선택한 날짜에 예약 기록이 없습니다</p>
+                </div>
+            )}
+        </>
     );
 }

@@ -4,6 +4,7 @@ import { supabaseClient } from "@/lib/supabase";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import Manage from "../page";
+import { FaStore, FaMapMarkerAlt, FaClock, FaFileAlt, FaTags, FaImage, FaSave } from "react-icons/fa";
 
 export default function ManageInfo() {
     const photoInput = useRef(null);
@@ -23,7 +24,7 @@ export default function ManageInfo() {
         tags: "",
     });
     const [photoToAddList, setPhotoToAddList] = useState([]);
-
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         const fetchMenus = async () => {
@@ -48,66 +49,57 @@ export default function ManageInfo() {
                 setPhotoToAddList(data[0].image);
                 setIsLoading(false)
             }
-
         }
         fetchMenus()
     }, []);
 
     const updateInfo = async (e) => {
         e.preventDefault();
+        setIsSaving(true);
 
-
-        if (image != null) {
-            const { data: uploadImage, error: uploadImageError } = await supabaseClient.storage.from("images").upload("menu_images/" + String(userData.b_id) + "/main/" + encodeFilename(image?.name), image);
-            if (uploadImage) {
-                // console.log("uploadImage");
-            } else if (uploadImageError) {
-                // console.log(uploadImageError);
+        try {
+            if (image != null) {
+                const { data: uploadImage, error: uploadImageError } = await supabaseClient.storage.from("images").upload("menu_images/" + String(userData.b_id) + "/main/" + encodeFilename(image?.name), image);
+                if (uploadImageError) {
+                    console.error(uploadImageError);
+                }
             }
-        }
 
-        business[0].image = updateBusiness.image
+            business[0].image = updateBusiness.image;
 
-        const { data } = await supabaseClient
-            .from('business_data')
-            .update({
-                image: updateBusiness.image,
-                name: updateBusiness.name,
-                address: updateBusiness.address,
-                time: updateBusiness.time,
-                description: updateBusiness.description,
-                tags: updateBusiness.tags
-            })
-            .eq("id", userData.b_id);
-        if (data) {
-        }
+            await supabaseClient
+                .from('business_data')
+                .update({
+                    image: updateBusiness.image,
+                    name: updateBusiness.name,
+                    address: updateBusiness.address,
+                    time: updateBusiness.time,
+                    description: updateBusiness.description,
+                    tags: updateBusiness.tags
+                })
+                .eq("id", userData.b_id);
 
-        if (isImageChanged) {
-            (async () => {
-                setIsLoading(true)
-                business[0].image = updateBusiness.image;
-                await sleep(3);
-                setIsLoading(false)
-                setIsImageChanged(false)
-            })();
-        } else {
-            (async () => {
-                setIsLoading(true)
-                await sleep(1);
-                setIsLoading(false)
-            })();
+            if (isImageChanged) {
+                await sleep(2);
+                setIsImageChanged(false);
+            }
+
+            // 성공 메시지 표시
+            alert("가게 정보가 성공적으로 업데이트되었습니다.");
+        } catch (error) {
+            console.error("업데이트 중 오류 발생:", error);
+            alert("저장 중 오류가 발생했습니다. 다시 시도해 주세요.");
+        } finally {
+            setIsSaving(false);
         }
-        // window.location.reload();
     }
 
-
     const handleInputImageChange = (e) => {
-        if (e.target.files != null) {
+        if (e.target.files && e.target.files[0]) {
             setImage(e.target.files[0]);
             updateBusiness.image = "https://cytktlrbanxiswqurqth.supabase.co/storage/v1/object/public/images/menu_images/" + String(userData.b_id) + "/main/" + encodeFilename(e.target.files[0].name);
             business[0].image = updateBusiness.image;
             setIsImageChanged(true);
-
             setPhotoToAddList(URL.createObjectURL(e.target.files[0]));
         }
     };
@@ -117,105 +109,190 @@ export default function ManageInfo() {
         setUpdateBusiness({ ...updateBusiness, [e.target.name]: value });
     };
 
-    const photoToAddPreview = () => {
-        return (
-            <Image
-                className="w-full rounded-xl mt-2"
-                src={photoToAddList}
-                alt={''}
-                width={100}
-                height={100}
-                style={{ objectFit: "cover" }}>
-            </Image>
-
-            // <img onClick={(e) => deletePhoto(image)} className="aspect-[3/2] w-[9rem] md:w-[15rem] h-[6rem] md:h-[10rem] border-2 rounded-xl" src={photoToAddList} />
-        )
-
-    };
-
     function encodeFilename(filename) {
         return Buffer.from(filename).toString('base64');
     }
+
     function sleep(sec) {
         return new Promise(resolve => setTimeout(resolve, sec * 1000));
     }
 
-    return (
-        <Manage>
-
-            {isLoading ?
+    // 아직 데이터가 로딩 중인 경우
+    if (isLoading) {
+        return (
+            <Manage>
                 <div className="flex flex-row mx-auto my-20 md:-my-20 h-screen justify-center md:items-center">
                     <div className="w-40 h-40 rounded-full animate-spin 
                             border-2 border-solid border-blue-500 border-t-transparent"></div>
                 </div>
-                :
-                <div className="min-[1000px]:flex px-[30px] py-[40px]">
+            </Manage>
+        );
+    }
 
-                    <div className="md:min-w-[450px] py-6 rounded-xl bg-white">
-                        <h2 className="mb-5 font-bold text-xl text-3xl mb-2 text-black pb-4 px-6 border-b-2 border-[#f4f5fa]">가게 정보</h2>
+    return (
+        <Manage>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+                <div className="container mx-auto px-[30px] py-[30px]">
+                    <div className="flex justify-between items-center mb-6">
+                        <h1 className="text-2xl font-bold text-slate-800">가게 정보 관리</h1>
+                    </div>
 
-                        <div className="px-6">
-                            {business != null && business.length == 1 ?
-                                <div key={business.id} className="flex flex-col h-full justify-between">
-                                    <div>
-                                        <p className="mt-5 text-sm font-semibold text-[#344054]" >가게 이름</p>
-                                        <input type="text" name="name" onChange={handleInputChange} defaultValue={updateBusiness.name} placeholder="카페 이름" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        {/* 가게 기본 정보 카드 */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <div className="flex items-center space-x-2 mb-6">
+                                <FaStore className="h-6 w-6 text-blue-500" />
+                                <h3 className="text-lg font-bold text-slate-800">기본 정보</h3>
+                            </div>
 
-                                        <p className="mt-5 text-sm font-semibold text-[#344054]" >가게 주소</p>
-                                        <input type="text" name="address" onChange={handleInputChange} defaultValue={updateBusiness.address} placeholder="카페 이름" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
-
-                                        <p className="mt-5 text-sm font-semibold text-[#344054]" >영업 시간</p>
-                                        <input type="text" name="time" onChange={handleInputChange} defaultValue={updateBusiness.time} placeholder="영업 시간" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
-
-                                        <p className="mt-5 text-sm font-semibold text-[#344054]" >가게 소개</p>
-                                        <input type="text" name="description" onChange={handleInputChange} defaultValue={updateBusiness.description} placeholder="가게 소개" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
-
-                                        <p className="mt-5 text-sm font-semibold text-[#344054]" >태그 추가</p>
-                                        <input type="text" name="tags" onChange={handleInputChange} defaultValue={updateBusiness.tags} placeholder="가게 소개" className="mt-2 bg-gray-50 border border-gray-300 text-[#1d2939] text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
-                                        <p className="mt-2 text-xs font-normal text-slate-600">- 띄어쓰기 없이 쉼표로 태그를 구분해 주세요.</p>
-                                        <p className="mt-1 text-xs font-normal text-slate-600">- 예시) 양식, 데이트, 코스요리</p>
-                                    </div>
-                                    <div className="flex justify-center md:justify-start items-center">
-                                        <button type="button"
-                                            onClick={updateInfo}
-                                            className="mt-5 text-white bg-[#4c6ef8] hover:bg-[#3d62f5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-7 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">저장</button>
-                                    </div>
+                            <div className="space-y-5">
+                                <div>
+                                    <label className="flex items-center text-sm font-semibold text-slate-700 mb-2">
+                                        <FaStore className="mr-2 text-blue-500" size={14} />
+                                        가게 이름
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        onChange={handleInputChange}
+                                        value={updateBusiness.name}
+                                        placeholder="가게 이름을 입력하세요"
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    />
                                 </div>
 
-                                :
-                                <p>로딩 에러</p>
-                            }
-                        </div>
-                    </div>
+                                <div>
+                                    <label className="flex items-center text-sm font-semibold text-slate-700 mb-2">
+                                        <FaMapMarkerAlt className="mr-2 text-red-500" size={14} />
+                                        가게 주소
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="address"
+                                        onChange={handleInputChange}
+                                        value={updateBusiness.address}
+                                        placeholder="가게 주소를 입력하세요"
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    />
+                                </div>
 
+                                <div>
+                                    <label className="flex items-center text-sm font-semibold text-slate-700 mb-2">
+                                        <FaClock className="mr-2 text-amber-500" size={14} />
+                                        영업 시간
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="time"
+                                        onChange={handleInputChange}
+                                        value={updateBusiness.time}
+                                        placeholder="영업 시간을 입력하세요 (예: 09:00-22:00)"
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    />
+                                </div>
 
-                    <div className="flex flex-col justify-between min-[1000px]:min-w-[500px] mt-4 min-[1000px]:mt-0 min-[1000px]:ml-4 py-6 rounded-xl bg-white">
-                        <div>
-                            <h2 className="mb-5 font-bold text-xl text-3xl mb-2 text-black pb-4 px-6 border-b-2 border-[#f4f5fa]">이미지 정보</h2>
-                        </div>
-                        <div className="flex flex-col h-full justify-between">
-                            <div>
-                                {business != null && business.length == 1 ?
-                                    <div key={business.id} className="px-6">
-                                        <p className="text-sm font-medium text-gray-900" >대표 이미지</p>
-                                        {photoToAddPreview()}
+                                <div>
+                                    <label className="flex items-center text-sm font-semibold text-slate-700 mb-2">
+                                        <FaFileAlt className="mr-2 text-green-500" size={14} />
+                                        가게 소개
+                                    </label>
+                                    <textarea
+                                        name="description"
+                                        onChange={handleInputChange}
+                                        value={updateBusiness.description}
+                                        placeholder="가게를 소개하는 글을 입력하세요"
+                                        rows={3}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    />
+                                </div>
 
-                                        <input name="menu_image" ref={photoInput} onChange={(e) => { handleInputImageChange(e) }} type="file" accept="image/*" className="block mt-2 w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 file:bg-blue-200 file:text-blue-700 file:font-semibold file:border-none file:px-4 file:py-1 file:mr-6 file:rounded" />
+                                <div>
+                                    <label className="flex items-center text-sm font-semibold text-slate-700 mb-2">
+                                        <FaTags className="mr-2 text-purple-500" size={14} />
+                                        태그
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="tags"
+                                        onChange={handleInputChange}
+                                        value={updateBusiness.tags}
+                                        placeholder="태그를 입력하세요 (예: 양식,데이트,코스요리)"
+                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    />
+                                    <div className="mt-2 text-xs text-slate-500">
+                                        <p>- 띄어쓰기 없이 쉼표로 태그를 구분해 주세요.</p>
+                                        <p>- 예시) 양식,데이트,코스요리</p>
                                     </div>
-                                    :
-                                    <p>로딩 에러</p>
-                                }
+                                </div>
                             </div>
-                            <div className="flex justify-center px-6 md:justify-start items-center">
-                                <button type="button"
-                                    onClick={updateInfo}
-                                    className="mt-5 text-white bg-[#4c6ef8] hover:bg-[#3d62f5] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-7 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">저장</button>
+                        </div>
+
+                        {/* 이미지 관리 카드 */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <div className="flex items-center space-x-2 mb-6">
+                                <FaImage className="h-6 w-6 text-green-500" />
+                                <h3 className="text-lg font-bold text-slate-800">대표 이미지</h3>
+                            </div>
+
+                            <div className="flex flex-col h-full">
+                                <div className="flex-grow">
+                                    <div className="mb-4">
+                                        <p className="text-sm font-semibold text-slate-700 mb-2">현재 이미지</p>
+                                        <div className="overflow-hidden rounded-xl border border-slate-200 aspect-video shadow-sm">
+                                            <Image
+                                                className="w-full h-full object-cover transition-transform hover:scale-105"
+                                                src={photoToAddList}
+                                                alt={'가게 대표 이미지'}
+                                                width={500}
+                                                height={300}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <p className="text-sm font-semibold text-slate-700 mb-2">이미지 변경</p>
+                                        <div className="relative">
+                                            <input
+                                                name="menu_image"
+                                                ref={photoInput}
+                                                onChange={handleInputImageChange}
+                                                type="file"
+                                                accept="image/*"
+                                                className="w-full px-4 py-2.5 text-sm text-slate-500 
+                                                        file:mr-4 file:py-2 file:px-4 file:rounded-md
+                                                        file:border-0 file:text-sm file:font-medium
+                                                        file:bg-blue-50 file:text-blue-700
+                                                        hover:file:bg-blue-100
+                                                        border border-slate-200 rounded-lg
+                                                        focus:outline-none focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <p className="mt-2 text-xs text-slate-500">
+                                            - 권장 이미지 크기: 1200 x 800px (3:2 비율)
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                </div>}
-
+                    {/* 저장 버튼 */}
+                    <div className="flex justify-end">
+                        <button
+                            onClick={updateInfo}
+                            disabled={isSaving}
+                            className={`flex items-center space-x-2 px-6 py-3 rounded-lg shadow-sm font-medium 
+                                    ${isSaving
+                                    ? 'bg-blue-300 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'} 
+                                    text-white transition-all duration-200`}
+                        >
+                            <FaSave className="h-4 w-4" />
+                            <span>{isSaving ? '저장 중...' : '변경사항 저장'}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </Manage>
-    )
+    );
 }
