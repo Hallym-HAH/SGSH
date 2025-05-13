@@ -5,7 +5,43 @@ import { useEffect, useState, useRef } from "react";
 import Chart from "react-apexcharts";
 import { dashboardChartData } from '@/components/feature/sales/chartData';
 import CountUp from "react-countup";
-import { FaWonSign, FaShoppingCart, FaCalendarCheck, FaEye, FaChartLine, FaChartPie, FaStar } from "react-icons/fa";
+import { FaWonSign, FaShoppingCart, FaCalendarAlt, FaCalendarCheck, FaEye, FaChartLine, FaChartPie, FaStar } from "react-icons/fa";
+import { DayPicker } from "react-day-picker";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+import "react-day-picker/dist/style.css";
+
+// 커스텀 Caption 컴포넌트 정의
+function CustomCaption(props) {
+    const { displayMonth, localeUtils, onClick } = props;
+
+    // 2025년 5월 형식으로 포맷팅
+    const formattedMonth = format(displayMonth, 'yyyy년 M월', { locale: ko });
+
+    return (
+        <div className="flex justify-between items-center px-1">
+            <h3 className="text-base font-bold text-slate-800">{formattedMonth}</h3>
+            <div className="flex space-x-1">
+                <button
+                    onClick={() => onClick('prev')}
+                    className="p-1 rounded-md hover:bg-slate-100"
+                >
+                    <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <button
+                    onClick={() => onClick('next')}
+                    className="p-1 rounded-md hover:bg-slate-100"
+                >
+                    <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    );
+}
 
 export default function ManageDashboard() {
     const [userData, setUserData] = useState({
@@ -21,6 +57,8 @@ export default function ManageDashboard() {
     const [hits, setHits] = useState([]);
     const [todayHits, setTodayHits] = useState([]);
     const [bestOrder, setBestOrder] = useState({});
+    const [calendarOpen, setCalendarOpen] = useState(false);
+    const [selectedDay, setSelectedDay] = useState(new Date());
 
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -28,6 +66,16 @@ export default function ManageDashboard() {
     const dd = String(today.getDate()).padStart(2, '0');
 
     const [formattedDate, setFormattedDate] = useState(`${yyyy}-${mm}-${dd}`);
+
+    // 날짜 선택 핸들러
+    const handleDaySelect = (day) => {
+        if (day) {
+            setSelectedDay(day);
+            const newFormattedDate = format(day, 'yyyy-MM-dd');
+            setFormattedDate(newFormattedDate);
+            setCalendarOpen(false);
+        }
+    };
 
     useEffect(() => {
         const fetchMenus = async () => {
@@ -40,8 +88,8 @@ export default function ManageDashboard() {
                     isPro: u_data.isPro
                 })
                 var b_id = u_data.b_id;
-
-                const { data: orders } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).neq('status', "cancel").like('time', `%${formattedDate}%`).order("id", { ascending: false });
+                const { data: orders } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).eq('status', "check").like('time', `%${formattedDate}%`).order("id", { ascending: false });
+                const { data: s_orders } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).eq('status', "order").like('time', `%${formattedDate}%`).order("id", { ascending: false });
                 const { data: c_orders } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).eq('status', "cancel").like('time', `%${formattedDate}%`).order("id", { ascending: false });
                 setCOrders(c_orders);
                 const result = {};
@@ -75,7 +123,6 @@ export default function ManageDashboard() {
 
                 const todayStr = new Date().toISOString().slice(0, 10);
                 const isBeforeToday = formattedDate < todayStr;
-
                 const now = new Date();
                 const currentHour = now.getHours();
 
@@ -117,7 +164,6 @@ export default function ManageDashboard() {
                     .eq('b_id', b_id)
                     .eq('date', formattedDate)  // 선택한 날짜의 예약만 필터링
                     .order("time", { ascending: true });  // 시간순으로 정렬
-
                 setReserved(reserveData);
 
                 const { data: hitsData } = await supabaseClient.from('business_hits').select(`*`).eq('b_id', b_id).order('date', { ascending: false }).limit(7);
@@ -247,29 +293,6 @@ export default function ManageDashboard() {
         }
     };
 
-    const dateSelectOptions = () => {
-        const today = new Date();
-        const options = [];
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            const yyyy = date.getFullYear();
-            const mm = String(date.getMonth() + 1).padStart(2, '0');
-            const dd = String(date.getDate()).padStart(2, '0');
-            const formattedDate = `${yyyy}-${mm}-${dd}`;
-            const displayDate = i === 0 ? '오늘' : `${mm}월 ${dd}일`;
-
-            options.push(
-                <option key={i} value={formattedDate}>
-                    {displayDate}
-                </option>
-            );
-        }
-
-        return options;
-    };
-
     // 선택된 날짜에서 월과 일 추출
     const selectedDate = new Date(formattedDate);
     const selectedMM = String(selectedDate.getMonth() + 1).padStart(2, '0');
@@ -290,15 +313,48 @@ export default function ManageDashboard() {
                 <div className="container mx-auto">
                     <div className="flex justify-between items-center px-[30px] pt-[30px] mb-2">
                         <h1 className="text-2xl font-bold text-slate-800">대시보드</h1>
-                        <div className="flex items-center space-x-2">
-                            <label className="text-sm font-medium text-slate-700">날짜 선택:</label>
-                            <select
-                                className="px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                value={formattedDate}
-                                onChange={(e) => setFormattedDate(e.target.value)}
+
+                        {/* DayPicker로 변경된 날짜 선택기 */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setCalendarOpen(!calendarOpen)}
+                                className="flex items-center px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition-colors"
                             >
-                                {dateSelectOptions()}
-                            </select>
+                                <FaCalendarAlt className="h-4 w-4 text-slate-500 mr-2" />
+                                <span className="text-sm font-medium">{format(selectedDay, 'yyyy년 MM월 dd일')}</span>
+                            </button>
+
+                            {calendarOpen && (
+                                <div className="absolute right-0 mt-2 z-0 bg-white rounded-lg shadow-lg border border-slate-200">
+                                    <DayPicker
+                                        mode="single"
+                                        selected={selectedDay}
+                                        onSelect={handleDaySelect}
+                                        locale={ko}
+                                        className="p-3"
+                                        components={{
+                                            Caption: CustomCaption
+                                        }}
+                                        styles={{
+                                            head_cell: { width: '2.5rem', fontSize: '0.875rem' },
+                                            cell: { width: '2.5rem', height: '2.5rem' },
+                                            day: { width: '2.5rem', height: '2.5rem' },
+                                        }}
+                                        modifiersStyles={{
+                                            selected: {
+                                                backgroundColor: '#3b82f6',
+                                                color: 'white',
+                                                fontWeight: 'bold',
+                                                borderRadius: '2.5rem',
+                                            },
+                                            today: {
+                                                color: '#3b82f6',
+                                                fontWeight: 'bold'
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
 

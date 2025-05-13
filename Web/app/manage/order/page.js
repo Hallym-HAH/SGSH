@@ -5,6 +5,42 @@ import { supabaseClient } from '@/lib/supabase';
 import React, { useEffect, useState, useRef } from 'react';
 import { FaShoppingCart, FaCalendarAlt, FaCheck, FaTimes, FaTable, FaClock, FaMoneyBillWave } from "react-icons/fa";
 import CountUp from "react-countup";
+import { DayPicker } from "react-day-picker";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+import "react-day-picker/dist/style.css";
+
+// 커스텀 Caption 컴포넌트 정의
+function CustomCaption(props) {
+    const { displayMonth, localeUtils, onClick } = props;
+
+    // 2025년 5월 형식으로 포맷팅
+    const formattedMonth = format(displayMonth, 'yyyy년 M월', { locale: ko });
+
+    return (
+        <div className="flex justify-between items-center px-1">
+            <h3 className="text-base font-bold text-slate-800">{formattedMonth}</h3>
+            <div className="flex space-x-1">
+                <button
+                    onClick={() => onClick('prev')}
+                    className="p-1 rounded-md hover:bg-slate-100"
+                >
+                    <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <button
+                    onClick={() => onClick('next')}
+                    className="p-1 rounded-md hover:bg-slate-100"
+                >
+                    <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    );
+}
 
 export default function ManageOrder() {
     const [isLoading, setIsLoading] = useState(true);
@@ -12,8 +48,10 @@ export default function ManageOrder() {
     const [userData, setUserData] = useState({
         b_id: 0,
     });
+    const [calendarOpen, setCalendarOpen] = useState(false);
 
     const today = new Date();
+    const [selectedDay, setSelectedDay] = useState(today);
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
@@ -21,6 +59,26 @@ export default function ManageOrder() {
     const [formattedDate, setFormattedDate] = useState(`${yyyy}-${mm}-${dd}`);
     const intervalIdRef = useRef(null);
 
+    // 날짜 선택 핸들러
+    const handleDaySelect = async (day) => {
+        if (day) {
+            setSelectedDay(day);
+            const newFormattedDate = format(day, 'yyyy-MM-dd');
+            setFormattedDate(newFormattedDate);
+            setCalendarOpen(false);
+
+            // 선택된 날짜로 데이터 불러오기
+            const { data } = await supabaseClient.from('order_data')
+                .select("*")
+                .eq('b_id', userData.b_id)
+                .like('time', `%${newFormattedDate}%`)
+                .order("id", { ascending: false });
+
+            setOrders(data);
+        }
+    };
+
+    // 기존 코드는 유지
     useEffect(() => {
         // 기존 interval 정리 (항상 먼저 실행)
         if (intervalIdRef.current) {
@@ -78,7 +136,7 @@ export default function ManageOrder() {
 
         fetchData();
 
-        // 컴포넌트 언마운트나 dependenceis 변경 시 정리
+        // 컴포넌트 언마운트나 dependencies 변경 시 정리
         return () => {
             if (intervalIdRef.current) {
                 clearInterval(intervalIdRef.current);
@@ -87,8 +145,10 @@ export default function ManageOrder() {
         };
     }, [formattedDate]);
 
+    // 기존 함수들 유지
     function beep() {
         var snd = new Audio("data:audio/wav;base64,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qJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU=");
+
         snd.play();
         snd.addEventListener("ended", function () {
             snd.currentTime = 0;
@@ -122,52 +182,10 @@ export default function ManageOrder() {
         setOrders(data)
     }
 
-    // 날짜를 하루 더하는 함수
-    const addOneDay = async () => {
-        const date = new Date(formattedDate);
-        date.setDate(date.getDate() + 1);
-        setFormattedDate(date.toISOString().slice(0, 10));
-        const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', userData.b_id).like('time', `%${date.toISOString().slice(0, 10)}%`).order("id", { ascending: false });
-        setOrders(data)
-    };
-
-    // 날짜를 하루 빼는 함수
-    const subtractOneDay = async () => {
-        const date = new Date(formattedDate);
-        date.setDate(date.getDate() - 1);
-        setFormattedDate(date.toISOString().slice(0, 10));
-        const { data } = await supabaseClient.from('order_data').select("*").eq('b_id', userData.b_id).like('time', `%${date.toISOString().slice(0, 10)}%`).order("id", { ascending: false });
-        setOrders(data)
-    };
-
     // 주문 상태별 개수
     const pendingOrders = orders ? orders.filter(order => order.status === "order").length : 0;
     const confirmedOrders = orders ? orders.filter(order => order.status === "check").length : 0;
     const cancelledOrders = orders ? orders.filter(order => order.status === "cancel").length : 0;
-
-    // 날짜 선택 옵션
-    const dateSelectOptions = () => {
-        const today = new Date();
-        const options = [];
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            const yyyy = date.getFullYear();
-            const mm = String(date.getMonth() + 1).padStart(2, '0');
-            const dd = String(date.getDate()).padStart(2, '0');
-            const formattedDate = `${yyyy}-${mm}-${dd}`;
-            const displayDate = i === 0 ? '오늘' : `${mm}월 ${dd}일`;
-
-            options.push(
-                <option key={i} value={formattedDate}>
-                    {displayDate}
-                </option>
-            );
-        }
-
-        return options;
-    };
 
     return (
         <Manage>
@@ -181,15 +199,49 @@ export default function ManageOrder() {
                     <div className="container mx-auto">
                         <div className="flex justify-between items-center px-[30px] pt-[30px] mb-4">
                             <h1 className="text-2xl font-bold text-slate-800">주문 관리</h1>
-                            <div className="flex items-center space-x-2">
-                                <label className="text-sm font-medium text-slate-700">날짜 선택:</label>
-                                <select
-                                    className="px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                    value={formattedDate}
-                                    onChange={(e) => setFormattedDate(e.target.value)}
+
+                            {/* DayPicker로 변경된 날짜 선택기 */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setCalendarOpen(!calendarOpen)}
+                                    className="flex items-center px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition-colors"
                                 >
-                                    {dateSelectOptions()}
-                                </select>
+                                    <FaCalendarAlt className="h-4 w-4 text-slate-500 mr-2" />
+                                    <span className="text-sm font-medium">{format(selectedDay, 'yyyy년 MM월 dd일')}</span>
+                                </button>
+
+                                {calendarOpen && (
+                                    <div className="absolute right-0 mt-2 z-10 bg-white rounded-xl shadow-xl border border-slate-200 p-4 w-[320px] animate-fadeIn">
+                                        <DayPicker
+                                            mode="single"
+                                            selected={selectedDay}
+                                            onSelect={handleDaySelect}
+                                            locale={ko}
+                                            disabled={{ after: new Date() }}
+                                            className="custom-daypicker"
+                                            components={{
+                                                Caption: CustomCaption
+                                            }}
+                                            styles={{
+                                                head_cell: { width: '2.5rem', fontSize: '0.875rem' },
+                                                cell: { width: '2.5rem', height: '2.5rem' },
+                                                day: { width: '2.5rem', height: '2.5rem' },
+                                            }}
+                                            modifiersStyles={{
+                                                selected: {
+                                                    backgroundColor: '#3b82f6',
+                                                    color: 'white',
+                                                    fontWeight: 'bold',
+                                                    borderRadius: '2.5rem',
+                                                },
+                                                today: {
+                                                    color: '#3b82f6',
+                                                    fontWeight: 'bold'
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
 
