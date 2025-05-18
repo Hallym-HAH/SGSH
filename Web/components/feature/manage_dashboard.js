@@ -51,7 +51,8 @@ export default function ManageDashboard() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [orders, setOrders] = useState({ orders: [], result: {}, cumulative: {}, orderByTime: {} });
-    const [cOrders, setCOrders] = useState([]);
+    const [sOrders, setSOrders] = useState([]); // 대기
+    const [cOrders, setCOrders] = useState([]); // 취소
     const [totalAmount, setTotalAmount] = useState(0);
     const [reserved, setReserved] = useState([]);
     const [hits, setHits] = useState([]);
@@ -91,6 +92,7 @@ export default function ManageDashboard() {
                 const { data: orders } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).eq('status', "check").like('time', `%${formattedDate}%`).order("id", { ascending: false });
                 const { data: s_orders } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).eq('status', "order").like('time', `%${formattedDate}%`).order("id", { ascending: false });
                 const { data: c_orders } = await supabaseClient.from('order_data').select("*").eq('b_id', b_id).eq('status', "cancel").like('time', `%${formattedDate}%`).order("id", { ascending: false });
+                setSOrders(s_orders);
                 setCOrders(c_orders);
                 const result = {};
                 const orderByTime = {};
@@ -399,14 +401,26 @@ export default function ManageDashboard() {
                                     />
                                     <span className="ml-1 text-lg font-medium text-slate-800">건</span>
                                 </div>
-                                <div className="mt-2 flex items-center text-sm text-red-500">
-                                    <span>취소 </span>
-                                    <CountUp
-                                        duration={2}
-                                        end={cOrders.length}
-                                        className="ml-1 font-semibold"
-                                    />
-                                    <span className="font-semibold">건</span>
+                                <div className="mt-2 flex items-center text-sm">
+                                    <div className="text-gray-500">
+                                        <span>대기 </span>
+                                        <CountUp
+                                            duration={2}
+                                            end={sOrders.length}
+                                            className="ml-1 font-semibold"
+                                        />
+                                        <span className="font-semibold">건</span>
+                                    </div>
+
+                                    <div className="text-red-500">
+                                        <span className="ml-5">취소 </span>
+                                        <CountUp
+                                            duration={2}
+                                            end={cOrders.length}
+                                            className="ml-1 font-semibold"
+                                        />
+                                        <span className="font-semibold">건</span>
+                                    </div>
                                 </div>
                             </div>
                             <div className="h-1 bg-gradient-to-r from-green-500 to-green-600 w-full"></div>
