@@ -711,11 +711,13 @@ export default function ThumbnailGenerator() {
                                             setUseInfo={setUseInfo}
                                             useKeyword={useKeyword}
                                             setUseKeyword={setUseKeyword}
-                                            blogPosts={blogPosts}          // 이 속성 추가
-                                            selectedBlogs={selectedBlogs}  // 이 속성 추가
-                                            setSelectedBlogs={setSelectedBlogs}  // 이 속성 추가
+                                            blogPosts={blogPosts}
+                                            selectedBlogs={selectedBlogs}
+                                            setSelectedBlogs={setSelectedBlogs}
+                                            fetchBlogPosts={fetchBlogPosts} // 이 속성 추가
                                         />
                                     )}
+
 
                                     {currentStep === 6 && (
                                         <ResultsPage
@@ -1141,9 +1143,22 @@ const OptionsPage = ({
                          setUseKeyword,
                          blogPosts,
                          selectedBlogs,
-                         setSelectedBlogs
+                         setSelectedBlogs,
+                         fetchBlogPosts // 부모 컴포넌트에서 이 함수를 prop으로 전달받아야 함
                      }) => {
 
+    // 검색어 상태 추가
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+
+    // 검색 처리 함수
+    const handleSearch = () => {
+        if (searchKeyword.trim()) {
+            setIsSearching(true);
+            fetchBlogPosts(searchKeyword)
+                .finally(() => setIsSearching(false));
+        }
+    };
 
     return (
         <div className="min-h-100 flex flex-col md:flex-row">
@@ -1208,7 +1223,31 @@ const OptionsPage = ({
 
                 <div className="p-4 bg-white shadow-md rounded-lg border border-gray-200 sticky top-4 mt-4">
                     {/* 블로그 선택 섹션 추가 */}
-                    <h3 className="text-lg font-semibold mb-2">블로그 선택</h3>
+                    {/*<h3 className="text-lg font-semibold mb-2">블로그 선택</h3>*/}
+                    {/* 검색어 입력창 추가 */}
+                    <div className="mb-3">
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                placeholder="검색 키워드 입력"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                                value={searchKeyword}
+                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                            />
+                            <button
+                                onClick={handleSearch}
+                                className="px-3 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition flex items-center justify-center"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none"
+                                     viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="max-h-64 overflow-y-auto space-y-3">
                         {blogPosts.length === 0 ? (
                             <p className="text-sm text-gray-500">검색된 블로그가 없습니다.</p>
@@ -1421,15 +1460,15 @@ const ResultsPage = ({
 
 // 최종 미리보기 페이지
 const TextPreviewStep = ({
-    editableTexts,
-    selectedTextIndex,
-    image,
-    thumbnailPreviewRef,
-    getTextStyle,
-    primaryText,
-    secondaryText,
-    previewPanelRef
-}) => {
+                             editableTexts,
+                             selectedTextIndex,
+                             image,
+                             thumbnailPreviewRef,
+                             getTextStyle,
+                             primaryText,
+                             secondaryText,
+                             previewPanelRef
+                         }) => {
     const selectedText = editableTexts[selectedTextIndex];
 
     return (
