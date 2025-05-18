@@ -1542,7 +1542,7 @@ const StepNavigation = (
                 이전
             </button>
         )}
-        {currentStep == 5 && (
+        {currentStep == 4 && (
             <button
                 onClick={onComplete}
                 disabled={!isDownloadEnabled()}
