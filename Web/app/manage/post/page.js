@@ -3,13 +3,13 @@
 import Manage from "../page";
 import ManageNavBar from "@/components/feature/manage_navbar";
 
-import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { AnimatePresence } from 'framer-motion';
+import {useState, useEffect, useRef} from 'react';
+import {motion} from 'framer-motion';
+import {AnimatePresence} from 'framer-motion';
 import Script from 'next/script';
 import Head from 'next/head';
-import { Noto_Sans_KR, Nanum_Gothic, IBM_Plex_Sans_KR, Black_Han_Sans, Jua } from 'next/font/google';
-import { supabaseClient } from "@/lib/supabase";
+import {Noto_Sans_KR, Nanum_Gothic, IBM_Plex_Sans_KR, Black_Han_Sans, Jua} from 'next/font/google';
+import {supabaseClient} from "@/lib/supabase";
 
 // 폰트 설정
 const notoSansKr = Noto_Sans_KR({
@@ -61,7 +61,7 @@ export default function ThumbnailGenerator() {
     // 첫번째 텍스트 관련 상태
     const [primaryText, setPrimaryText] = useState({
         content: "텍스트를 입력하세요",
-        position: { x: 50, y: 50 },
+        position: {x: 50, y: 50},
         style: {
             fontSize: 35,
             color: "#ffffff",
@@ -72,7 +72,7 @@ export default function ThumbnailGenerator() {
     // 두번째 텍스트 관련 상태
     const [secondaryText, setSecondaryText] = useState({
         content: "두번째 텍스트를 입력하세요",
-        position: { x: 70, y: 90 },
+        position: {x: 70, y: 90},
         style: {
             fontSize: 20,
             color: "#ffffff",
@@ -96,7 +96,7 @@ export default function ThumbnailGenerator() {
 
     // 단계 설정 상태
     const [currentStep, setCurrentStep] = useState(1);
-    const totalSteps = 4; // 총 단계 수\
+    const totalSteps = 7; // 총 단계 수\
 
     // 스크롤 관련 상태
     const previewPanelRef = useRef(null);
@@ -264,7 +264,7 @@ export default function ThumbnailGenerator() {
 
     // 텍스트 위치 조정 처리
     // 텍스트 위치 상단, 중단, 하단 값 지정
-    const fixedPositions = { 'top': 30, 'middle': 50, 'bottom': 65 };
+    const fixedPositions = {'top': 30, 'middle': 50, 'bottom': 65};
     const handlePositionChange = (position, isSecondary = false) => {
         // const fixedPositions = {'top': 20, 'middle': 50, 'bottom': 70};
         setPrimaryText(prev => ({
@@ -472,7 +472,7 @@ export default function ThumbnailGenerator() {
     useEffect(() => {
 
         const fetchMenus = async () => {
-            const { data } = await supabaseClient.from('business_data').select("*").eq('id', 1);
+            const {data} = await supabaseClient.from('business_data').select("*").eq('id', 1);
             setBusiness(data)
         }
         fetchMenus()
@@ -495,7 +495,7 @@ export default function ThumbnailGenerator() {
 
     // 단계 이동
     const nextStep = () => {
-        if (currentStep < 6) {
+        if (currentStep < totalSteps) {
             setCurrentStep(currentStep + 1);
         }
     };
@@ -618,10 +618,10 @@ export default function ThumbnailGenerator() {
     return (
         <Manage>
             <Head>
-                <link rel="stylesheet" href="/fonts/fonts.css" />
+                <link rel="stylesheet" href="/fonts/fonts.css"/>
             </Head>
 
-            <Script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" strategy="afterInteractive" />
+            <Script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" strategy="afterInteractive"/>
 
             <div className="p-4">
                 <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
@@ -630,7 +630,7 @@ export default function ThumbnailGenerator() {
 
                         {/* 단계 표시 */}
                         <div className="flex mb-6">
-                            {[1, 2, 3, 4, 5, 6].map(step => (
+                            {[1, 2, 3, 4, 5, 6, 7].map(step => (
                                 <div
                                     key={step}
                                     className={`w-1/4 h-2 mx-1 rounded ${currentStep >= step ? 'bg-indigo-500' : 'bg-gray-200'}`}
@@ -730,6 +730,18 @@ export default function ThumbnailGenerator() {
                                         />
                                     )}
 
+                                    {currentStep === 7 && (
+                                        <TextPreviewStep
+                                            editableTexts={editableTexts}
+                                            selectedTextIndex={selectedTextIndex}
+                                            image={image}
+                                            thumbnailPreviewRef={thumbnailPreviewRef}
+                                            getTextStyle={getTextStyle}
+                                            primaryText={primaryText}
+                                            secondaryText={secondaryText}
+                                            previewPanelRef={previewPanelRef}
+                                        />
+                                    )}
 
 
                                 </AnimatePresence>
@@ -738,7 +750,7 @@ export default function ThumbnailGenerator() {
                                 {business[0] != undefined &&
                                     <StepNavigation
                                         currentStep={currentStep}
-                                        totalSteps={6}
+                                        totalSteps={totalSteps}
                                         onNext={nextStep}
                                         onPrev={prevStep}
                                         onComplete={downloadThumbnail}
@@ -771,9 +783,9 @@ export default function ThumbnailGenerator() {
                                             className="bg-gray-800 rounded-xl p-2 shadow-inner flex items-center justify-center">
                                             <div
                                                 className="relative w-full max-w-md mx-auto overflow-hidden rounded-lg shadow-lg"
-                                                style={{ aspectRatio: '4/5' }}>
+                                                style={{aspectRatio: '4/5'}}>
                                                 <div ref={thumbnailPreviewRef}
-                                                    className="relative overflow-hidden w-full h-full">
+                                                     className="relative overflow-hidden w-full h-full">
                                                     <img
                                                         src={image.src}
                                                         alt="썸네일 이미지"
@@ -799,10 +811,11 @@ export default function ThumbnailGenerator() {
     );
 }
 
+
 // 1단계 이미지 입력
 //
 
-const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, presetImageCount = 4 }) => {
+const ImageUploadStep = ({image, handleImageUpload, handlePresetImageSelect, presetImageCount = 4}) => {
     const [selectedPresetIndex, setSelectedPresetIndex] = useState(null);
 
     // Generate array of preset images with unique URLs to avoid caching issues
@@ -820,10 +833,10 @@ const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, pr
 
     return (
         <motion.div
-            initial={{ x: 300, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -300, opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            initial={{x: 300, opacity: 0}}
+            animate={{x: 0, opacity: 1}}
+            exit={{x: -300, opacity: 0}}
+            transition={{duration: 0.5}}
         >
             <h4 className="text-xl font-semibold mb-4">1. 이미지 업로드</h4>
             {/* 기존 이미지 업로드 UI */}
@@ -834,14 +847,14 @@ const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, pr
                         className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-400 rounded-lg cursor-pointer transition duration-300">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <svg className="w-10 h-10 text-indigo-500 mb-3" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                             </svg>
                             <p className="text-sm text-indigo-600">이미지를 업로드하세요</p>
                         </div>
                         <input id="image-upload" type="file" className="hidden" accept="image/*"
-                            onChange={handleImageUpload} />
+                               onChange={handleImageUpload}/>
                     </label>
                 </div>
                 <p className="mt-2 text-sm text-gray-500">{image.name}</p>
@@ -892,14 +905,13 @@ const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, pr
 };
 
 
-
 // 2단계 텍스트 입력
-const TextInputStep = ({ primaryText, secondaryText, handlePrimaryTextInput, handleSecondaryTextInput }) => (
+const TextInputStep = ({primaryText, secondaryText, handlePrimaryTextInput, handleSecondaryTextInput}) => (
     <motion.div
-        initial={{ x: 300, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: -300, opacity: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={{x: 300, opacity: 0}}
+        animate={{x: 0, opacity: 1}}
+        exit={{x: -300, opacity: 0}}
+        transition={{duration: 0.5}}
     >
         <h3 className="text-xl font-semibold mb-4">2. 텍스트 입력</h3>
 
@@ -932,24 +944,24 @@ const TextInputStep = ({ primaryText, secondaryText, handlePrimaryTextInput, han
 
 // 3단계 폰트 설정
 const FontSettingsStep = ({
-    textStyle,
-    primaryText,
-    secondaryText,
-    handleFontSizeChange,
-    handleFontColorChange,
-    handleCommonStyleChange,
-    handleOutlinePropertyChange,
-    notoSansKr,
-    nanumGothic,
-    ibmPlexSansKr,
-    blackHanSans,
-    jua
-}) => (
+                              textStyle,
+                              primaryText,
+                              secondaryText,
+                              handleFontSizeChange,
+                              handleFontColorChange,
+                              handleCommonStyleChange,
+                              handleOutlinePropertyChange,
+                              notoSansKr,
+                              nanumGothic,
+                              ibmPlexSansKr,
+                              blackHanSans,
+                              jua
+                          }) => (
     <motion.div
-        initial={{ x: 300, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: -300, opacity: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={{x: 300, opacity: 0}}
+        animate={{x: 0, opacity: 1}}
+        exit={{x: -300, opacity: 0}}
+        transition={{duration: 0.5}}
     >
         <h3 className="text-xl font-semibold mb-4">3. 폰트 설정</h3>
 
@@ -1069,12 +1081,12 @@ const FontSettingsStep = ({
 );
 
 // 4단계 위치 설정
-const PositionSettingsStep = ({ primaryText, handlePositionChange, fixedPositions }) => (
+const PositionSettingsStep = ({primaryText, handlePositionChange, fixedPositions}) => (
     <motion.div
-        initial={{ x: 300, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: -300, opacity: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={{x: 300, opacity: 0}}
+        animate={{x: 0, opacity: 1}}
+        exit={{x: -300, opacity: 0}}
+        transition={{duration: 0.5}}
     >
         <h3 className="text-xl font-semibold mb-4">4. 위치 설정</h3>
 
@@ -1086,9 +1098,9 @@ const PositionSettingsStep = ({ primaryText, handlePositionChange, fixedPosition
                     onClick={() => handlePositionChange('top')}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" strokeWidth="2">
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                        <line x1="8" y1="8" x2="16" y2="8" />
+                         stroke="currentColor" strokeWidth="2">
+                        <rect x="4" y="4" width="16" height="16" rx="2"/>
+                        <line x1="8" y1="8" x2="16" y2="8"/>
                     </svg>
                     <span className="text-xs">상단</span>
                 </button>
@@ -1098,9 +1110,9 @@ const PositionSettingsStep = ({ primaryText, handlePositionChange, fixedPosition
                     onClick={() => handlePositionChange('middle')}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" strokeWidth="2">
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                        <line x1="8" y1="12" x2="16" y2="12" />
+                         stroke="currentColor" strokeWidth="2">
+                        <rect x="4" y="4" width="16" height="16" rx="2"/>
+                        <line x1="8" y1="12" x2="16" y2="12"/>
                     </svg>
                     <span className="text-xs">중앙</span>
                 </button>
@@ -1110,9 +1122,9 @@ const PositionSettingsStep = ({ primaryText, handlePositionChange, fixedPosition
                     onClick={() => handlePositionChange('bottom')}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" strokeWidth="2">
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                        <line x1="8" y1="16" x2="16" y2="16" />
+                         stroke="currentColor" strokeWidth="2">
+                        <rect x="4" y="4" width="16" height="16" rx="2"/>
+                        <line x1="8" y1="16" x2="16" y2="16"/>
                     </svg>
                     <span className="text-xs">하단</span>
                 </button>
@@ -1122,15 +1134,15 @@ const PositionSettingsStep = ({ primaryText, handlePositionChange, fixedPosition
 );
 
 const OptionsPage = ({
-    generatedText,
-    useInfo,
-    setUseInfo,
-    useKeyword,
-    setUseKeyword,
-    blogPosts,
-    selectedBlogs,
-    setSelectedBlogs
-}) => {
+                         generatedText,
+                         useInfo,
+                         setUseInfo,
+                         useKeyword,
+                         setUseKeyword,
+                         blogPosts,
+                         selectedBlogs,
+                         setSelectedBlogs
+                     }) => {
 
 
     return (
@@ -1154,11 +1166,11 @@ const OptionsPage = ({
                                 <span
                                     className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor" stroke="currentColor" strokeWidth="1">
+                                         viewBox="0 0 20 20"
+                                         fill="currentColor" stroke="currentColor" strokeWidth="1">
                                         <path fillRule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clipRule="evenodd"></path>
+                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                              clipRule="evenodd"></path>
                                     </svg>
                                 </span>
                             </label>
@@ -1179,11 +1191,11 @@ const OptionsPage = ({
                                 <span
                                     className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor" stroke="currentColor" strokeWidth="1">
+                                         viewBox="0 0 20 20"
+                                         fill="currentColor" stroke="currentColor" strokeWidth="1">
                                         <path fillRule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clipRule="evenodd"></path>
+                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                              clipRule="evenodd"></path>
                                     </svg>
                                 </span>
                             </label>
@@ -1205,7 +1217,7 @@ const OptionsPage = ({
                                 <div
                                     key={index}
                                     className={`border rounded-lg p-3 cursor-pointer transition ${selectedBlogs.includes(blog.link) ? 'bg-indigo-50 border-indigo-300' : 'bg-white hover:bg-gray-50'
-                                        }`}
+                                    }`}
                                     onClick={() => {
                                         if (selectedBlogs.includes(blog.link)) {
                                             setSelectedBlogs(selectedBlogs.filter(link => link !== blog.link));
@@ -1217,9 +1229,9 @@ const OptionsPage = ({
                                     <div className="flex items-start">
                                         <div className="flex-1 pr-2">
                                             <h4 className="font-medium text-gray-800 mb-1"
-                                                dangerouslySetInnerHTML={{ __html: blog.title }}></h4>
+                                                dangerouslySetInnerHTML={{__html: blog.title}}></h4>
                                             <p className="text-sm text-gray-600 line-clamp-2"
-                                                dangerouslySetInnerHTML={{ __html: blog.description }}></p>
+                                               dangerouslySetInnerHTML={{__html: blog.description}}></p>
                                             <p className="text-xs text-gray-500 mt-2">
                                                 {blog.postdate.slice(0, 4) + "-" + blog.postdate.slice(4, 6) + "-" + blog.postdate.slice(6, 8)}
                                             </p>
@@ -1227,13 +1239,13 @@ const OptionsPage = ({
                                         <div className="flex-shrink-0 ml-2">
                                             <div
                                                 className={`h-5 w-5 rounded-full flex items-center justify-center border ${selectedBlogs.includes(blog.link) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'
-                                                    }`}>
+                                                }`}>
                                                 {selectedBlogs.includes(blog.link) && (
                                                     <svg className="h-3 w-3 text-white" fill="currentColor"
-                                                        viewBox="0 0 20 20">
+                                                         viewBox="0 0 20 20">
                                                         <path fillRule="evenodd"
-                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                            clipRule="evenodd" />
+                                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                              clipRule="evenodd"/>
                                                     </svg>
                                                 )}
                                             </div>
@@ -1272,15 +1284,15 @@ const OptionsPage = ({
 };
 
 const ResultsPage = ({
-    generatedText,
-    isGenerating,
-    editableTexts,
-    selectedTextIndex,
-    editMode,
-    onTextChange,
-    onToggleEditMode,
-    onSelectText
-}) => {
+                         generatedText,
+                         isGenerating,
+                         editableTexts,
+                         selectedTextIndex,
+                         editMode,
+                         onTextChange,
+                         onToggleEditMode,
+                         onSelectText
+                     }) => {
     // 로컬 상태 제거 (모두 props로 받음)
 
     // 텍스트가 초기값인지 확인하는 함수
@@ -1293,7 +1305,7 @@ const ResultsPage = ({
             <div className="flex justify-around w-full md:w-full md:pr-4">
                 {/* 텍스트 생성 결과 1 */}
                 <div
-                    className={`bg-white p-4 rounded-lg shadow-md border border-gray-200 w-9/20 cursor-pointer transition ${selectedTextIndex === 0 ? 'bg-indigo-50 border-indigo-300' : 'bg-white hover:bg-gray-50'}`}
+                    className={`bg-white p-4 rounded-lg shadow-md border border-gray-200 w-19/40 cursor-pointer transition ${selectedTextIndex === 0 ? 'bg-indigo-50 border-indigo-300' : 'bg-white hover:bg-gray-50'}`}
                     onClick={() => !editMode[0] && !editMode[1] && !isGenerating && onSelectText(0)}
                 >
                     <div className="flex items-center justify-between mb-3">
@@ -1305,7 +1317,7 @@ const ResultsPage = ({
                                     : editMode[0]
                                         ? 'bg-green-500 text-white'
                                         : 'bg-indigo-500 text-white'
-                                    }`}
+                                }`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (!isGenerating && !isDefaultText(editableTexts[0])) onToggleEditMode(0);
@@ -1315,10 +1327,13 @@ const ResultsPage = ({
                                 {editMode[0] ? '수정 완료' : '수정'}
                             </button>
                             <div className="flex-shrink-0">
-                                <div className={`h-5 w-5 rounded-full flex items-center justify-center border ${selectedTextIndex === 0 ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
+                                <div
+                                    className={`h-5 w-5 rounded-full flex items-center justify-center border ${selectedTextIndex === 0 ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
                                     {selectedTextIndex === 0 && (
                                         <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            <path fillRule="evenodd"
+                                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                  clipRule="evenodd"/>
                                         </svg>
                                     )}
                                 </div>
@@ -1333,7 +1348,8 @@ const ResultsPage = ({
                             rows={10}
                         />
                     ) : (
-                        <div className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md min-h-100 flex items-center justify-center">
+                        <div
+                            className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md min-h-100 flex items-center justify-center">
                             {isDefaultText(editableTexts[0]) ? (
                                 <p className="text-gray-500">글을 생성하면 결과가 여기에 표시됩니다.</p>
                             ) : (
@@ -1345,7 +1361,7 @@ const ResultsPage = ({
 
                 {/* 텍스트 생성 결과 2 */}
                 <div
-                    className={`bg-white p-4 rounded-lg shadow-md border border-gray-200 w-9/20 cursor-pointer transition ${selectedTextIndex === 1 ? 'bg-indigo-50 border-indigo-300' : 'bg-white hover:bg-gray-50'}`}
+                    className={`bg-white p-4 rounded-lg shadow-md border border-gray-200 w-19/40 cursor-pointer transition ${selectedTextIndex === 1 ? 'bg-indigo-50 border-indigo-300' : 'bg-white hover:bg-gray-50'}`}
                     onClick={() => !editMode[0] && !editMode[1] && !isGenerating && onSelectText(1)}
                 >
                     <div className="flex items-center justify-between mb-3">
@@ -1357,7 +1373,7 @@ const ResultsPage = ({
                                     : editMode[1]
                                         ? 'bg-green-500 text-white'
                                         : 'bg-indigo-500 text-white'
-                                    }`}
+                                }`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (!isGenerating && !isDefaultText(editableTexts[1])) onToggleEditMode(1);
@@ -1367,10 +1383,13 @@ const ResultsPage = ({
                                 {editMode[1] ? '수정 완료' : '수정'}
                             </button>
                             <div className="flex-shrink-0">
-                                <div className={`h-5 w-5 rounded-full flex items-center justify-center border ${selectedTextIndex === 1 ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
+                                <div
+                                    className={`h-5 w-5 rounded-full flex items-center justify-center border ${selectedTextIndex === 1 ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
                                     {selectedTextIndex === 1 && (
                                         <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            <path fillRule="evenodd"
+                                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                  clipRule="evenodd"/>
                                         </svg>
                                     )}
                                 </div>
@@ -1385,7 +1404,8 @@ const ResultsPage = ({
                             rows={10}
                         />
                     ) : (
-                        <div className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md min-h-100 flex items-center justify-center">
+                        <div
+                            className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md min-h-100 flex items-center justify-center">
                             {isDefaultText(editableTexts[1]) ? (
                                 <p className="text-gray-500">글을 생성하면 결과가 여기에 표시됩니다.</p>
                             ) : (
@@ -1393,6 +1413,58 @@ const ResultsPage = ({
                             )}
                         </div>
                     )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// 최종 미리보기 페이지
+const TextPreviewStep = ({
+    editableTexts,
+    selectedTextIndex,
+    image,
+    thumbnailPreviewRef,
+    getTextStyle,
+    primaryText,
+    secondaryText,
+    previewPanelRef
+}) => {
+    const selectedText = editableTexts[selectedTextIndex];
+
+    return (
+        <div className="flex flex-col md:flex-row gap-6">
+            {/* 좌측: 선택한 텍스트 표시 */}
+            <div className="w-full md:w-1/2">
+                <h2 className="text-2xl font-bold mb-4">선택한 텍스트 미리보기</h2>
+                <div className="bg-white p-4 rounded-lg shadow-md h-[500px]">
+                    <div className="h-full overflow-y-auto">
+                        <h3 className="text-lg font-semibold mb-3">선택된 텍스트</h3>
+                        {selectedText && selectedText !== "글 생성 대기" ? (
+                            <div className="whitespace-pre-wrap">{selectedText}</div>
+                        ) : (
+                            <div className="text-gray-500 flex items-center justify-center h-full">선택된 텍스트가 없습니다</div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* 우측: 이미지 미리보기 */}
+            <div className="w-full md:w-1/2">
+                <h2 className="text-2xl font-bold mb-4">썸네일 미리보기</h2>
+                <div
+                    ref={previewPanelRef}
+                    className="bg-gray-800 rounded-xl p-4 shadow-inner h-[500px] flex items-center justify-center"
+                >
+                    <div ref={thumbnailPreviewRef} className="relative overflow-hidden w-full h-full">
+                        <img
+                            src={image.src}
+                            alt="썸네일 이미지"
+                            className="absolute top-0 left-0 w-full h-full object-cover"
+                        />
+                        <div style={getTextStyle(false)}>{primaryText.content}</div>
+                        <div style={getTextStyle(true)}>{secondaryText.content}</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1431,18 +1503,75 @@ const StepNavigation = (
                 이전
             </button>
         )}
-        {currentStep == totalSteps - 2 && (
+        {currentStep == 5 && (
             <button
                 onClick={onComplete}
                 disabled={!isDownloadEnabled()}
                 className={`px-4 py-2 rounded-lg transition ml-auto ${isDownloadEnabled()
                     ? 'bg-green-600 text-white hover:bg-green-700'
                     : 'bg-gray-400 text-white cursor-not-allowed'
-                    }`}
+                }`}
             >
                 썸네일 다운로드
             </button>
         )}
+
+        {currentStep === 6 && (
+            <button
+                // StepNavigation 컴포넌트 내부 텍스트 생성 버튼의 onClick 함수
+                // 글 생성 버튼
+                onClick={async () => {
+                    setIsGenerating(true);
+                    try {
+                        setIsGenerating(true);
+                        const fetchPromise1 = fetch(
+                            `${process.env.NEXT_PUBLIC_GCP_API_URL}/generate?name=${b_name}&address=${b_address}&time=${b_time}&number=${b_number}&description=${b_description}&use_info=${useInfo}&use_keyword=${useKeyword}&blogs=${selectedBlogs.join(',')}`
+                        ).then(response => response.json());
+
+                        const fetchPromise2 = fetch(
+                            `${process.env.NEXT_PUBLIC_GCP_API_URL_2}/generate?name=${b_name}&address=${b_address}&time=${b_time}&number=${b_number}&description=${b_description}&use_info=${useInfo}&use_keyword=${useKeyword}&blogs=${selectedBlogs.join(',')}`
+                        ).then(response => response.json());
+
+                        const [result1, result2] = await Promise.all([fetchPromise1, fetchPromise2]);
+                        setGeneratedText([result1.generated_content, result2.generated_content]); // 또는 필요에 따라 두 결과를 모두 처리
+                    } catch (error) {
+                        console.error('Error fetching data:', error);
+                    } finally {
+                        setIsGenerating(false);
+                    }
+
+                }}
+
+                disabled={isGenerating}
+                className={`px-4 py-2 rounded-lg transition ml-auto ${isGenerating ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white`}
+            >
+                {isGenerating ? (
+                    <>
+                        <span className="inline-block animate-spin mr-2">⟳</span>
+                        글 생성 중...
+                    </>
+                ) : (
+                    "글 생성"
+                )}
+            </button>
+        )}
+
+        {/* 7단계에 글 게시 버튼 추가 */}
+        {currentStep === 7 && (
+            <button
+                onClick={() => {
+                    // 글 게시 처리 로직 구현
+                    console.log("글 게시 요청");
+                    // 여기에 실제 게시 API 호출 로직 추가
+                    // 예: postContent(editableTexts[selectedTextIndex])
+                    alert("글이 성공적으로 게시되었습니다!");
+                }}
+                className="px-4 py-2 rounded-lg transition ml-auto bg-green-600 hover:bg-green-700 text-white"
+            >
+                글 게시
+            </button>
+        )}
+
         {currentStep < totalSteps && (
             <button
                 onClick={onNext}
@@ -1450,62 +1579,6 @@ const StepNavigation = (
             >
                 다음
             </button>
-        )}
-
-        {currentStep === totalSteps && (
-            <div>
-                {/* 글 생성 버튼 */}
-                <button
-                    // StepNavigation 컴포넌트 내부 텍스트 생성 버튼의 onClick 함수
-                    onClick={async () => {
-                        setIsGenerating(true);
-
-                        // try {
-                        //     // 체크박스 상태와 선택된 블로그를 URL 파라미터로 전송
-                        //     const response = await fetch(
-                        //         `${process.env.NEXT_PUBLIC_GCP_API_URL}/generate?name=${b_name}&address=${b_address}&time=${b_time}&number=${b_number}&description=${b_description}&use_info=${useInfo}&use_keyword=${useKeyword}&blogs=${selectedBlogs.join(',')}`
-                        //     );
-                        //     const result = await response.json();
-                        //     setGeneratedText(result.generated_content);
-                        // } catch (error) {
-                        //     console.error('Error fetching data:', error);
-                        // } finally {
-                        //     setIsGenerating(false);
-                        // }
-
-                        try {
-                            setIsGenerating(true);
-                            const fetchPromise1 = fetch(
-                                `${process.env.NEXT_PUBLIC_GCP_API_URL}/generate?name=${b_name}&address=${b_address}&time=${b_time}&number=${b_number}&description=${b_description}&use_info=${useInfo}&use_keyword=${useKeyword}&blogs=${selectedBlogs.join(',')}`
-                            ).then(response => response.json());
-
-                            const fetchPromise2 = fetch(
-                                `${process.env.NEXT_PUBLIC_GCP_API_URL}/generate?name=${b_name}&address=${b_address}&time=${b_time}&number=${b_number}&description=${b_description}&use_info=${useInfo}&use_keyword=${useKeyword}&blogs=${selectedBlogs.join(',')}`
-                            ).then(response => response.json());
-
-                            const [result1, result2] = await Promise.all([fetchPromise1, fetchPromise2]);
-                            setGeneratedText([result1.generated_content, result2.generated_content]); // 또는 필요에 따라 두 결과를 모두 처리
-                        } catch (error) {
-                            console.error('Error fetching data:', error);
-                        } finally {
-                            setIsGenerating(false);
-                        }
-
-                    }}
-
-                    disabled={isGenerating}
-                    className={`px-4 py-2 rounded-lg transition ml-auto ${isGenerating ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white`}
-                >
-                    {isGenerating ? (
-                        <>
-                            <span className="inline-block animate-spin mr-2">⟳</span>
-                            글 생성 중...
-                        </>
-                    ) : (
-                        "글 생성"
-                    )}
-                </button>
-            </div>
         )}
     </div>
 );
