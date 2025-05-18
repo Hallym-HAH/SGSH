@@ -23,6 +23,19 @@ class _MyDiningPageState extends State<MyDiningPage> {
     _fetchReservations();
   }
 
+  bool _didFetchOnDependencies = false;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didFetchOnDependencies) {
+      _didFetchOnDependencies = true;
+      return;
+    }
+    print('[디버그] didChangeDependencies에서 _fetchReservations 호출!');
+    // 화면에 다시 진입할 때마다 새로고침
+    _fetchReservations();
+  }
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -44,6 +57,7 @@ class _MyDiningPageState extends State<MyDiningPage> {
   }
 
   Future<void> _fetchReservations() async {
+    print('[디버그] _fetchReservations 실행');
     try {
       final uuid = Supabase.instance.client.auth.currentUser?.id;
       if (uuid == null) return;
@@ -53,6 +67,7 @@ class _MyDiningPageState extends State<MyDiningPage> {
           .select()
           .eq('uuid', uuid);
 
+      print('[디버그] Supabase에서 받아온 예약 데이터: $response');
       final List<Map<String, dynamic>> fetched =
           List<Map<String, dynamic>>.from(response);
 
@@ -100,6 +115,7 @@ class _MyDiningPageState extends State<MyDiningPage> {
 
       setState(() {
         reservations = enriched;
+        print('[디버그] setState로 reservations 갱신: ${reservations.length}개');
       });
     } catch (e) {
       print('❌ 예약 가져오기 실패: $e');
@@ -203,30 +219,33 @@ class _MyDiningPageState extends State<MyDiningPage> {
       return false;
     }).toList();
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      children: [
+    return RefreshIndicator(
+      onRefresh: _fetchReservations,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        children: [
           if (filtered.isEmpty)
             const Center(
               child: Padding(
-              padding: EdgeInsets.only(top: 60),
+                padding: EdgeInsets.only(top: 60),
                 child: Text(
                   '예약 내역이 없습니다.',
-                style: TextStyle(fontSize: 15, color: Color(0xFFB0B0B0)),
+                  style: TextStyle(fontSize: 15, color: Color(0xFFB0B0B0)),
                 ),
               ),
             )
           else
             ...filtered.map((data) {
-            if (category == 2) {
+              if (category == 2) {
                 return _buildCanceledCard(data);
               } else {
-              return category == 1
+                return category == 1
                     ? _buildCompletedCard(data)
                     : _buildReservationCard(data);
               }
             }).toList(),
         ],
+      ),
     );
   }
 
@@ -343,7 +362,15 @@ class _MyDiningPageState extends State<MyDiningPage> {
             children: [
               Row(
                 children: [
-                  if (dDay != null) _buildBadge('D-$dDay', color: Colors.red),
+                  if (dDay != null)
+                    _buildBadge(
+                      dDay == 0
+                          ? 'D-day'
+                          : dDay > 0
+                              ? 'D-${dDay}'
+                              : 'D+${dDay.abs()}',
+                      color: Colors.red,
+                    ),
                   const SizedBox(width: 6),
                   _buildBadge(
                     '예약',
@@ -455,7 +482,7 @@ class _MyDiningPageState extends State<MyDiningPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          storeName,
+                        storeName,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -463,7 +490,18 @@ class _MyDiningPageState extends State<MyDiningPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          tagStr.isNotEmpty ? '$region · $tagStr' : region,
+                          (() {
+                            final address = data['address'] ?? '';
+                            final region = extractRegion(address);
+                            final tags = data['tags'] ?? [];
+                            final tagList = (tags is String)
+                                ? tags.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()
+                                : (tags is List ? tags : []);
+                            final tagStr = tagList.isNotEmpty
+                                ? tagList.take(3).join(', ')
+                                : '';
+                            return tagStr.isNotEmpty ? '$region | $tagStr' : region;
+                          })(),
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 13,
@@ -603,7 +641,18 @@ class _MyDiningPageState extends State<MyDiningPage> {
             ),
             const SizedBox(height: 4),
                         Text(
-                          tagStr.isNotEmpty ? '$region · $tagStr' : region,
+                          (() {
+                            final address = data['address'] ?? '';
+                            final region = extractRegion(address);
+                            final tags = data['tags'] ?? [];
+                            final tagList = (tags is String)
+                                ? tags.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()
+                                : (tags is List ? tags : []);
+                            final tagStr = tagList.isNotEmpty
+                                ? tagList.take(3).join(', ')
+                                : '';
+                            return tagStr.isNotEmpty ? '$region | $tagStr' : region;
+                          })(),
                           style: const TextStyle(color: Colors.grey, fontSize: 13),
                         ),
                       ],
@@ -744,7 +793,18 @@ class _MyDiningPageState extends State<MyDiningPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        tagStr.isNotEmpty ? '$region · $tagStr' : region,
+                        (() {
+                          final address = data['address'] ?? '';
+                          final region = extractRegion(address);
+                          final tags = data['tags'] ?? [];
+                          final tagList = (tags is String)
+                              ? tags.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()
+                              : (tags is List ? tags : []);
+                          final tagStr = tagList.isNotEmpty
+                              ? tagList.take(3).join(', ')
+                              : '';
+                          return tagStr.isNotEmpty ? '$region | $tagStr' : region;
+                        })(),
                         style: const TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(height: 4),
