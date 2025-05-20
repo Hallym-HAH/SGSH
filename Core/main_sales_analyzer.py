@@ -167,6 +167,79 @@ def analyze_sales_with_llm(analysis_result, analysis_type="daily"):
     return response.content
 
 
+# def format_analysis_result(analysis_result, analysis_type):
+#     """
+#     분석 결과를 LLM 프롬프트에 적합한 형태로 변환합니다.
+#     """
+#     if analysis_type == "daily":
+#         # 오늘 매출 데이터 추출
+#         sales = analysis_result['sales']['today']
+#         top_menus = analysis_result['today_top_menus']
+#         sales_by_time = analysis_result['today_sales_by_time']
+#         top_combos = analysis_result['today_top_combos']
+#
+#         # 시간대별 매출 비율 계산
+#         total_time_sales = sum(sales_by_time)
+#         morning_sales = sum(sales_by_time[0:4])  # 8-12시
+#         afternoon_sales = sum(sales_by_time[4:9])  # 12-17시
+#         evening_sales = sum(sales_by_time[9:])  # 17-20시
+#
+#         formatted_text = f"""
+#         ## 기본 매출 정보
+#         - 일일 총매출: {sales:,}원
+#         - 거래 건수: {len(analysis_result['today_orders'])}건
+#
+#         ## 시간대별 매출
+#         - 오전(8-12시): {morning_sales:,}원 ({morning_sales / total_time_sales * 100:.1f}%)
+#         - 오후(12-17시): {afternoon_sales:,}원 ({afternoon_sales / total_time_sales * 100:.1f}%)
+#         - 저녁(17-20시): {evening_sales:,}원 ({evening_sales / total_time_sales * 100:.1f}%)
+#
+#         ## 인기 메뉴 TOP 5
+#         {format_top_items(top_menus)}
+#
+#         ## 인기 메뉴 조합 TOP 5
+#         {format_top_items(top_combos) if top_combos else "데이터 없음"}
+#
+#         ## 시간대별 매출 상세
+#         {format_sales_by_hour(sales_by_time)}
+#         """
+#     elif analysis_type == "weekly":
+#         # 주간 매출 데이터 추출
+#         sales = analysis_result['sales']['week']
+#         top_menus = analysis_result.get('week_top_menus', [])
+#         sales_by_time = analysis_result.get('week_sales_by_time', [])
+#
+#         formatted_text = f"""
+#         ## 기본 매출 정보
+#         - 주간 총매출: {sales:,}원
+#         - 주간 거래 건수: {len(analysis_result['week_orders'])}건
+#
+#         ## 인기 메뉴 TOP 5
+#         {format_top_items(top_menus) if top_menus else "데이터 없음"}
+#
+#         ## 시간대별 매출 상세
+#         {format_sales_by_hour(sales_by_time) if sales_by_time else "데이터 없음"}
+#         """
+#     else:  # monthly
+#         # 월간 매출 데이터 추출
+#         sales = analysis_result['sales']['month']
+#         top_menus = analysis_result.get('month_top_menus', [])
+#         sales_by_time = analysis_result.get('month_sales_by_time', [])
+#
+#         formatted_text = f"""
+#         ## 기본 매출 정보
+#         - 월간 총매출: {sales:,}원
+#         - 월간 거래 건수: {len(analysis_result['month_orders'])}건
+#
+#         ## 인기 메뉴 TOP 5
+#         {format_top_items(top_menus) if top_menus else "데이터 없음"}
+#
+#         ## 시간대별 매출 상세
+#         {format_sales_by_hour(sales_by_time) if sales_by_time else "데이터 없음"}
+#         """
+#
+#     return formatted_text
+
 def format_analysis_result(analysis_result, analysis_type):
     """
     분석 결과를 LLM 프롬프트에 적합한 형태로 변환합니다.
@@ -174,9 +247,12 @@ def format_analysis_result(analysis_result, analysis_type):
     if analysis_type == "daily":
         # 오늘 매출 데이터 추출
         sales = analysis_result['sales']['today']
+        orders = analysis_result['today_orders']
         top_menus = analysis_result['today_top_menus']
         sales_by_time = analysis_result['today_sales_by_time']
         top_combos = analysis_result['today_top_combos']
+        combo_sales = analysis_result['today_combo_sales']
+        patterns = analysis_result['today_patterns']
 
         # 시간대별 매출 비율 계산
         total_time_sales = sum(sales_by_time)
@@ -187,58 +263,124 @@ def format_analysis_result(analysis_result, analysis_type):
         formatted_text = f"""
         ## 기본 매출 정보
         - 일일 총매출: {sales:,}원
-        - 거래 건수: {len(analysis_result['today_orders'])}건
-
-        ## 시간대별 매출
+        - 거래 건수: {len(orders)}건
+        
+        ## 시간대별 매출 분포
         - 오전(8-12시): {morning_sales:,}원 ({morning_sales / total_time_sales * 100:.1f}%)
         - 오후(12-17시): {afternoon_sales:,}원 ({afternoon_sales / total_time_sales * 100:.1f}%)
         - 저녁(17-20시): {evening_sales:,}원 ({evening_sales / total_time_sales * 100:.1f}%)
-
+        
         ## 인기 메뉴 TOP 5
         {format_top_items(top_menus)}
-
+        
         ## 인기 메뉴 조합 TOP 5
-        {format_top_items(top_combos) if top_combos else "데이터 없음"}
-
+        {format_top_combos(top_combos) if top_combos else "데이터 없음"}
+        
+        ## 메뉴 조합별 매출 TOP 5
+        {format_combo_sales(combo_sales) if combo_sales else "데이터 없음"}
+        
         ## 시간대별 매출 상세
         {format_sales_by_hour(sales_by_time)}
+        
+        ## 패턴 분석 (주요 메뉴 조합)
+        {format_patterns(patterns) if len(patterns) > 0 else "충분한 데이터가 없습니다."}
         """
+
     elif analysis_type == "weekly":
         # 주간 매출 데이터 추출
         sales = analysis_result['sales']['week']
-        top_menus = analysis_result.get('week_top_menus', [])
-        sales_by_time = analysis_result.get('week_sales_by_time', [])
+        orders = analysis_result['week_orders']
+        top_menus = analysis_result['week_top_menus']
+        sales_by_time = analysis_result['week_sales_by_time']
+        top_combos = analysis_result['week_top_combos']
+        combo_sales = analysis_result['week_combo_sales']
+        patterns = analysis_result['week_patterns']
 
         formatted_text = f"""
         ## 기본 매출 정보
         - 주간 총매출: {sales:,}원
-        - 주간 거래 건수: {len(analysis_result['week_orders'])}건
-
+        - 주간 거래 건수: {len(orders)}건
+        
         ## 인기 메뉴 TOP 5
-        {format_top_items(top_menus) if top_menus else "데이터 없음"}
-
+        {format_top_items(top_menus)}
+        
+        ## 인기 메뉴 조합 TOP 5
+        {format_top_combos(top_combos) if top_combos else "데이터 없음"}
+        
+        ## 메뉴 조합별 매출 TOP 5
+        {format_combo_sales(combo_sales) if combo_sales else "데이터 없음"}
+        
         ## 시간대별 매출 상세
-        {format_sales_by_hour(sales_by_time) if sales_by_time else "데이터 없음"}
+        {format_sales_by_hour(sales_by_time)}
+        
+        ## 패턴 분석 (주요 메뉴 조합)
+        {format_patterns(patterns) if len(patterns) > 0 else "충분한 데이터가 없습니다."}
         """
+
     else:  # monthly
         # 월간 매출 데이터 추출
         sales = analysis_result['sales']['month']
-        top_menus = analysis_result.get('month_top_menus', [])
-        sales_by_time = analysis_result.get('month_sales_by_time', [])
+        orders = analysis_result['month_orders']
+        top_menus = analysis_result['month_top_menus']
+        sales_by_time = analysis_result['month_sales_by_time']
+        top_combos = analysis_result['month_top_combos']
+        combo_sales = analysis_result['month_combo_sales']
+        patterns = analysis_result['month_patterns']
 
         formatted_text = f"""
         ## 기본 매출 정보
         - 월간 총매출: {sales:,}원
-        - 월간 거래 건수: {len(analysis_result['month_orders'])}건
-
+        - 월간 거래 건수: {len(orders)}건
+        
         ## 인기 메뉴 TOP 5
-        {format_top_items(top_menus) if top_menus else "데이터 없음"}
-
+        {format_top_items(top_menus)}
+        
+        ## 인기 메뉴 조합 TOP 5
+        {format_top_combos(top_combos) if top_combos else "데이터 없음"}
+        
+        ## 메뉴 조합별 매출 TOP 5
+        {format_combo_sales(combo_sales) if combo_sales else "데이터 없음"}
+        
         ## 시간대별 매출 상세
-        {format_sales_by_hour(sales_by_time) if sales_by_time else "데이터 없음"}
+        {format_sales_by_hour(sales_by_time)}
+        
+        ## 패턴 분석 (주요 메뉴 조합)
+        {format_patterns(patterns) if len(patterns) > 0 else "충분한 데이터가 없습니다."}
         """
 
     return formatted_text
+
+
+def format_top_combos(combos_list):
+    """인기 메뉴 조합을 포맷팅"""
+    result = ""
+    for i, ((menu1, menu2), count) in enumerate(combos_list, 1):
+        result += f" {i}. {menu1} + {menu2}: {count:,}회\n"
+    return result
+
+
+def format_combo_sales(combo_sales_list):
+    """메뉴 조합별 매출을 포맷팅"""
+    result = ""
+    for i, ((menu1, menu2), sales) in enumerate(combo_sales_list, 1):
+        result += f" {i}. {menu1} + {menu2}: {sales:,}원\n"
+    return result
+
+
+def format_patterns(patterns_df):
+    """패턴 분석 결과를 포맷팅"""
+    if len(patterns_df) == 0:
+        return "충분한 데이터가 없습니다."
+
+    result = ""
+    for i, row in patterns_df.head(3).iterrows():
+        itemset_str = ', '.join(list(row['itemsets']))
+        result += f" {i + 1}. {itemset_str}\n"
+        result += f"    - 지지도: {row['support']:.3f}\n"
+        result += f"    - 주문 횟수: {row['order_count']}회\n"
+        result += f"    - 총 매출: {row['total_sales']:,}원\n"
+
+    return result
 
 
 def format_top_items(items_list):
