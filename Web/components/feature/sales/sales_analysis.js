@@ -419,21 +419,22 @@ const SalesAnalysis = () => {
                 .replace(/\\n/g, '\n') // \n을 실제 줄바꿈으로 변환
                 .replace(/\*\*/g, ''); // **를 제거 (볼드체 마크다운)
 
-            // 데이터를 섹션별로 분할 (더 유연한 정규식 사용)
-            const sections = cleanedData.split(/(?=### \d+\.)/g).filter(Boolean);
+            // 데이터를 섹션별로 분할 - "###"으로 시작하는 모든 섹션 찾기
+            const sections = cleanedData.split(/(?=### )/g).filter(Boolean);
 
             const processedSections = sections.map(section => {
-                // 제목 추출을 위한 더 유연한 정규식
-                const titleMatch = section.match(/### \d+\.\s*(.*?)(?:\n|$)/);
+                // 제목 추출 - "### " 다음부터 줄바꿈이나 문자열 끝까지
+                const titleMatch = section.match(/### (.*?)(?:\n|$)/);
                 const title = titleMatch ? titleMatch[1].trim() : '제목 없음';
 
-                // 내용 추출
-                const content = section.replace(/### \d+\..*?(?:\n|$)/, '').trim();
+                // 내용 추출 - 제목 줄을 제외한 나머지 부분
+                const content = section.replace(/### .*?(?:\n|$)/, '').trim();
 
                 return { title, content };
             });
 
             console.log("분석 데이터 처리 완료:", processedSections);
+
 
             // 분석 데이터 설정
             setAnalysisData(processedSections);
