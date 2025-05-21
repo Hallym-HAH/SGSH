@@ -399,7 +399,7 @@ def format_sales_by_hour(sales_by_time):
     return result
 
 
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# if __name__ == "__main__":
+#     import uvicorn
+#
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
