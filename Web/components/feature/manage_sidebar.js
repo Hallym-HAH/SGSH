@@ -12,15 +12,15 @@ export default function ManageSideBar() {
             <div className="h-full flex flex-col py-6">
                 {/* 로고 영역 */}
                 <div className="px-6 mb-8">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         <Image
-                            src={'/images/icon.png'}
+                            src={'/images/icon1.png'}
                             alt="가치가게 로고"
                             width={36}
                             height={36}
-                            className="rounded-lg"
+                            className="rounded-lg w-[30px]"
                         />
-                        <span className="font-bold text-xl text-slate-800">가치가게</span>
+                        <span className="font-bold text-[27px] text-slate-800">가치가게</span>
                     </div>
                 </div>
 
