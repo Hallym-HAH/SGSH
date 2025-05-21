@@ -50,9 +50,10 @@ export default function ManageLayout({ children }) {
         const { data, error } = await supabaseClient.auth.signInWithOAuth({
             provider: "kakao",
             options: {
-                redirectTo: 'http://localhost:3000/manage',
+                redirectTo: `${window.location.origin}/manage`,
             }
         })
+        if (data) window.location.href = data.url;
     }
 
     return (

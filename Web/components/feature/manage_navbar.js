@@ -54,7 +54,7 @@ export default function ManageNavBar() {
   }
 
   return (
-    <nav className="w-full rounded-b-xl bg-[#4C6EF8] sticky top-0 z-10">
+    <nav className="w-full rounded-b-xl bg-[#4C6EF8] sticky top-0 z-20">
       <div className="justify-start pl-6 pr-2 md:px-2 lg:max-w-9xl md:items-center md:flex md:px-8">
 
         <div className="flex w-full items-center justify-between py-3 md:py-5 md:block ">

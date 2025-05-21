@@ -210,14 +210,6 @@ export default function SalesDaily() {
                     )}
                 </div>
 
-                {/* 차트 타입 토글 버튼 */}
-                <button
-                    className="px-4 py-2 bg-blue-100 text-blue-600 rounded-lg flex items-center transition-colors hover:bg-blue-200"
-                    onClick={() => setIsLine(!isLine)}
-                >
-                    {isLine ? <FaChartLine className="mr-2" /> : <FaChartBar className="mr-2" />}
-                    {isLine ? "라인 차트" : "바 차트"}
-                </button>
             </div>
 
             {/* 매출 요약 카드 */}
