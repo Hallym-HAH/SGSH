@@ -20,15 +20,15 @@ const SalesAnalysis = () => {
     });
 
     const [orderData, setOrderData] = useState({
-        today: '',
-        week: '',
-        month: '',
+        today: '0',
+        week: '0',
+        month: '0',
     });
 
     const [salesTimeData, setSalesTimeData] = useState({
-        today: '',
-        week: '',
-        month: '',
+        today: '0',
+        week: '0',
+        month: '0',
     });
 
     // 주문 한 건에 대한 매출 계산 함수
@@ -109,10 +109,6 @@ const SalesAnalysis = () => {
                     .gte('time', formatDateForQuery(todayStart))
                     .lt('time', formatDateForQuery(nextDayStart));
 
-                console.log(formatDateForQuery(todayStart));
-                console.log(formatDateForQuery(nextDayStart));
-                console.log(todayOrders);
-
                 if (todayError) throw new Error('오늘 매출 조회 오류: ' + todayError.message);
 
                 // 이번 주 주문 데이터 조회
@@ -180,14 +176,12 @@ const SalesAnalysis = () => {
                 const todayOrderData = formatOrderData(todayOrders).replace(/\s/g, '');
                 const weekOrderData = formatOrderData(weekOrders).replace(/\s/g, '');
                 const monthOrderData = formatOrderData(monthOrders).replace(/\s/g, '');
-
                 // orderData 상태 업데이트
                 setOrderData({
                     today: todayOrderData,
                     week: weekOrderData,
                     month: monthOrderData
                 });
-
 
                 // STS (t_sts, w_sts, m_sts)
                 // 시간대별 매출 계산 함수
@@ -267,7 +261,7 @@ const SalesAnalysis = () => {
             const formattedDate = formatDateString(startDate);
 
             var sta = `sta=${totalSales.today}_${totalSales.week}_${totalSales.month}`;
-            var t_od = `&t_od=${orderData.today}`;
+            var t_od = orderData.today.length == 0 ? '&t_od=0_0_0_0' : `&t_od=${orderData.today}`;
             var w_od = `&w_od=${orderData.week}`;
             var m_od = `&m_od=${orderData.month}`;
             var t_sts = `&t_sts=${salesTimeData.today}`;
@@ -376,7 +370,7 @@ const SalesAnalysis = () => {
             const formattedDate = formatDateString(startDate);
 
             var sta = `sta=${totalSales.today}_${totalSales.week}_${totalSales.month}`;
-            var t_od = `&t_od=${orderData.today}`;
+            var t_od = orderData.today.length == 0 ? '&t_od=0_0_0_0' : `&t_od=${orderData.today}`;
             var w_od = `&w_od=${orderData.week}`;
             var m_od = `&m_od=${orderData.month}`;
             var t_sts = `&t_sts=${salesTimeData.today}`;
@@ -433,7 +427,7 @@ const SalesAnalysis = () => {
                 return { title, content };
             });
 
-            console.log("분석 데이터 처리 완료:", processedSections);
+            // console.log("분석 데이터 처리 완료:", processedSections);
 
 
             // 분석 데이터 설정
