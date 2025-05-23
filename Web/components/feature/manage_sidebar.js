@@ -60,7 +60,7 @@ export default function ManageSideBar() {
                                     <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"></path>
                                 </svg>
                                 <span className="ml-3 flex-1">메뉴 관리</span>
-                                <span className="px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full">Pro</span>
+                                {/* <span className="px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full">Pro</span> */}
                             </Link>
                         </li>
 
@@ -73,7 +73,7 @@ export default function ManageSideBar() {
                                     <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"></path>
                                 </svg>
                                 <span className="ml-3 flex-1">주문 관리</span>
-                                <span className="px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full">Pro</span>
+                                {/* <span className="px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full">Pro</span> */}
                             </Link>
                         </li>
 
@@ -86,7 +86,7 @@ export default function ManageSideBar() {
                                     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"></path>
                                 </svg>
                                 <span className="ml-3 flex-1">예약 관리</span>
-                                <span className="px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full">Pro</span>
+                                {/* <span className="px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full">Pro</span> */}
                             </Link>
                         </li>
 
@@ -112,7 +112,6 @@ export default function ManageSideBar() {
                                 </svg>
                                 <span className="ml-3 flex-1">홍보글 생성</span>
                                 <span className="px-2 py-0.5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full">Pro</span>
-                                <span className="flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-blue-500 rounded-full ml-2">3</span>
                             </Link>
                         </li>
                     </ul>

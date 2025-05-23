@@ -26,8 +26,8 @@ export default function ManageCalc() {
                             <button
                                 onClick={() => setOpenTab(1)}
                                 className={`flex-1 py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${openTab === 1
-                                        ? "bg-blue-500 text-white shadow-sm"
-                                        : "text-slate-500 hover:bg-slate-100"
+                                    ? "bg-blue-500 text-white shadow-sm"
+                                    : "text-slate-500 hover:bg-slate-100"
                                     }`}
                             >
                                 <FaChartLine className={`h-4 w-4 ${openTab === 1 ? "text-white" : "text-blue-500"}`} />
@@ -36,18 +36,19 @@ export default function ManageCalc() {
                             <button
                                 onClick={() => setOpenTab(2)}
                                 className={`flex-1 py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${openTab === 2
-                                        ? "bg-green-500 text-white shadow-sm"
-                                        : "text-slate-500 hover:bg-slate-100"
+                                    ? "bg-green-500 text-white shadow-sm"
+                                    : "text-slate-500 hover:bg-slate-100"
                                     }`}
                             >
                                 <FaChartBar className={`h-4 w-4 ${openTab === 2 ? "text-white" : "text-green-500"}`} />
                                 <span>매출 분석</span>
+                                <span className="px-2 py-0.5 text-xs font-medium text-green-600 bg-green-100 rounded-full">Pro</span>
                             </button>
                             <button
                                 onClick={() => setOpenTab(3)}
                                 className={`flex-1 py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-medium transition-all ${openTab === 3
-                                        ? "bg-amber-500 text-white shadow-sm"
-                                        : "text-slate-500 hover:bg-slate-100"
+                                    ? "bg-amber-500 text-white shadow-sm"
+                                    : "text-slate-500 hover:bg-slate-100"
                                     }`}
                             >
                                 <FaCalculator className={`h-4 w-4 ${openTab === 3 ? "text-white" : "text-amber-500"}`} />
