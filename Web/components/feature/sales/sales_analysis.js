@@ -501,7 +501,7 @@ const SalesAnalysis = () => {
             }
             // 빈 줄
             else if (line.trim() === '') {
-                return <div key={index} className="my-2"></div>;
+                return <br />;
             }
             // 일반 텍스트
             else {
