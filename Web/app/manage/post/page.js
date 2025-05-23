@@ -3,13 +3,13 @@
 import Manage from "../page";
 import ManageNavBar from "@/components/feature/manage_navbar";
 
-import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { AnimatePresence } from 'framer-motion';
+import {useState, useEffect, useRef} from 'react';
+import {motion} from 'framer-motion';
+import {AnimatePresence} from 'framer-motion';
 import Script from 'next/script';
 import Head from 'next/head';
-import { Noto_Sans_KR, Nanum_Gothic, IBM_Plex_Sans_KR, Black_Han_Sans, Jua } from 'next/font/google';
-import { supabaseClient } from "@/lib/supabase";
+import {Noto_Sans_KR, Nanum_Gothic, IBM_Plex_Sans_KR, Black_Han_Sans, Jua} from 'next/font/google';
+import {supabaseClient} from "@/lib/supabase";
 
 // 폰트 설정
 const notoSansKr = Noto_Sans_KR({
@@ -61,7 +61,7 @@ export default function ThumbnailGenerator() {
     // 첫번째 텍스트 관련 상태
     const [primaryText, setPrimaryText] = useState({
         content: "텍스트를 입력하세요",
-        position: { x: 50, y: 50 },
+        position: {x: 50, y: 50},
         style: {
             fontSize: 35,
             color: "#ffffff",
@@ -72,7 +72,7 @@ export default function ThumbnailGenerator() {
     // 두번째 텍스트 관련 상태
     const [secondaryText, setSecondaryText] = useState({
         content: "두번째 텍스트를 입력하세요",
-        position: { x: 70, y: 90 },
+        position: {x: 70, y: 90},
         style: {
             fontSize: 20,
             color: "#ffffff",
@@ -120,6 +120,9 @@ export default function ThumbnailGenerator() {
     // 블로그 포스트 관련 상태
     const [blogPosts, setBlogPosts] = useState([]);
     const [selectedBlogs, setSelectedBlogs] = useState([]);
+
+    // 포스팅 대기 관련 상태
+    const [isPosting, setIsPosting] = useState(false);
 
     // 글 생성 확인 텍스트 관련 상태
     const [editableTexts, setEditableTexts] = useState([...generatedText]);
@@ -264,7 +267,7 @@ export default function ThumbnailGenerator() {
 
     // 텍스트 위치 조정 처리
     // 텍스트 위치 상단, 중단, 하단 값 지정
-    const fixedPositions = { 'top': 30, 'middle': 50, 'bottom': 65 };
+    const fixedPositions = {'top': 30, 'middle': 50, 'bottom': 65};
     const handlePositionChange = (position, isSecondary = false) => {
         // const fixedPositions = {'top': 20, 'middle': 50, 'bottom': 70};
         setPrimaryText(prev => ({
@@ -472,7 +475,7 @@ export default function ThumbnailGenerator() {
     useEffect(() => {
 
         const fetchMenus = async () => {
-            const { data } = await supabaseClient.from('business_data').select("*").eq('id', 1);
+            const {data} = await supabaseClient.from('business_data').select("*").eq('id', 1);
             setBusiness(data)
         }
         fetchMenus()
@@ -618,10 +621,10 @@ export default function ThumbnailGenerator() {
     return (
         <Manage>
             <Head>
-                <link rel="stylesheet" href="/fonts/fonts.css" />
+                <link rel="stylesheet" href="/fonts/fonts.css"/>
             </Head>
 
-            <Script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" strategy="afterInteractive" />
+            <Script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" strategy="afterInteractive"/>
 
             <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100">
                 <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -633,7 +636,7 @@ export default function ThumbnailGenerator() {
                                 <div key={step} className="flex flex-col items-center">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold mb-2
                                 ${currentStep === step ? 'bg-indigo-600 text-white' :
-                                            currentStep > step ? 'bg-indigo-200 text-indigo-700' : 'bg-gray-200 text-gray-600'}`}>
+                                        currentStep > step ? 'bg-indigo-200 text-indigo-700' : 'bg-gray-200 text-gray-600'}`}>
                                         {step}
                                     </div>
                                     <span className="text-xs hidden md:block text-gray-600">
@@ -651,7 +654,8 @@ export default function ThumbnailGenerator() {
 
                         <div className="flex flex-col md:flex-row bg-white rounded-xl overflow-hidden h-full">
                             {/* 왼쪽 패널: 설정 영역 */}
-                            <div className={`${currentStep >= 5 ? 'w-full' : 'w-full md:w-1/2'} p-6 border border-gray-100 rounded-lg overflow-y-auto`}>
+                            <div
+                                className={`${currentStep >= 5 ? 'w-full' : 'w-full md:w-1/2'} p-6 border border-gray-100 rounded-lg overflow-y-auto`}>
                                 <AnimatePresence mode="wait">
                                     {currentStep === 1 && (
                                         <ImageUploadStep
@@ -737,6 +741,7 @@ export default function ThumbnailGenerator() {
                                             primaryText={primaryText}
                                             secondaryText={secondaryText}
                                             previewPanelRef={previewPanelRef}
+                                            isPosting={isPosting}
                                         />
                                     )}
                                 </AnimatePresence>
@@ -752,8 +757,12 @@ export default function ThumbnailGenerator() {
                                             onComplete={downloadThumbnail}
                                             isDownloadEnabled={isDownloadEnabled}
                                             setGeneratedText={setGeneratedText}
+                                            editableTexts={editableTexts}
+                                            selectedTextIndex={selectedTextIndex}
                                             isGenerating={isGenerating}
                                             setIsGenerating={setIsGenerating}
+                                            isPosting={isPosting}
+                                            setIsPosting={setIsPosting}
                                             useInfo={useInfo}
                                             useKeyword={useKeyword}
                                             selectedBlogs={selectedBlogs}
@@ -779,9 +788,9 @@ export default function ThumbnailGenerator() {
                                             className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-4 shadow-inner flex items-center justify-center">
                                             <div
                                                 className="relative w-full max-w-md mx-auto overflow-hidden rounded-lg shadow-xl transform transition-all hover:scale-[1.02]"
-                                                style={{ aspectRatio: '4/5' }}>
+                                                style={{aspectRatio: '4/5'}}>
                                                 <div ref={thumbnailPreviewRef}
-                                                    className="relative overflow-hidden w-full h-full">
+                                                     className="relative overflow-hidden w-full h-full">
                                                     <img
                                                         src={image.src}
                                                         alt="썸네일 이미지"
@@ -806,7 +815,7 @@ export default function ThumbnailGenerator() {
 
 
 // 1단계 이미지 입력
-const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, presetImageCount = 4 }) => {
+const ImageUploadStep = ({image, handleImageUpload, handlePresetImageSelect, presetImageCount = 4}) => {
     const [selectedPresetIndex, setSelectedPresetIndex] = useState(null);
 
     const presetImages = Array(presetImageCount).fill().map((_, index) =>
@@ -820,10 +829,10 @@ const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, pr
 
     return (
         <motion.div
-            initial={{ x: 300, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -300, opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            initial={{x: 300, opacity: 0}}
+            animate={{x: 0, opacity: 1}}
+            exit={{x: -300, opacity: 0}}
+            transition={{duration: 0.5}}
             className="p-4 bg-white rounded-xl shadow-sm"
         >
             <h4 className="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">이미지 선택</h4>
@@ -836,21 +845,23 @@ const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, pr
                         className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-400 rounded-xl cursor-pointer transition duration-300 transform hover:scale-[1.02]">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <svg className="w-12 h-12 text-indigo-500 mb-3" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                             </svg>
                             <p className="text-sm text-indigo-600 font-medium">클릭하여 이미지 업로드</p>
                             <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF 파일 (최대 10MB)</p>
                         </div>
                         <input id="image-upload" type="file" className="hidden" accept="image/*"
-                            onChange={handleImageUpload} />
+                               onChange={handleImageUpload}/>
                     </label>
                 </div>
                 {image.name && (
                     <div className="mt-3 flex items-center text-sm text-gray-600">
-                        <svg className="w-4 h-4 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        <svg className="w-4 h-4 mr-1 text-green-500" fill="none" stroke="currentColor"
+                             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                  d="M5 13l4 4L19 7"></path>
                         </svg>
                         <span>{image.name}</span>
                     </div>
@@ -866,8 +877,8 @@ const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, pr
                             key={index}
                             className={`aspect-square relative overflow-hidden rounded-xl border-2 transition-all cursor-pointer
                                 ${selectedPresetIndex === index
-                                    ? 'ring-4 ring-indigo-500 border-indigo-500'
-                                    : 'border-gray-200 hover:border-indigo-300'}`}
+                                ? 'ring-4 ring-indigo-500 border-indigo-500'
+                                : 'border-gray-200 hover:border-indigo-300'}`}
                             onClick={() => handleImageSelect(imgSrc, index)}
                             role="radio"
                             aria-checked={selectedPresetIndex === index}
@@ -881,13 +892,13 @@ const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, pr
                             <div className="absolute top-2 right-2">
                                 <div className={`h-6 w-6 rounded-full flex items-center justify-center border shadow-md
                                     ${selectedPresetIndex === index
-                                        ? 'bg-indigo-600 border-indigo-600'
-                                        : 'bg-white border-gray-300'}`}>
+                                    ? 'bg-indigo-600 border-indigo-600'
+                                    : 'bg-white border-gray-300'}`}>
                                     {selectedPresetIndex === index && (
                                         <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd"
-                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                clipRule="evenodd" />
+                                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                  clipRule="evenodd"/>
                                         </svg>
                                     )}
                                 </div>
@@ -902,12 +913,12 @@ const ImageUploadStep = ({ image, handleImageUpload, handlePresetImageSelect, pr
 
 
 // 2단계 텍스트 입력
-const TextInputStep = ({ primaryText, secondaryText, handlePrimaryTextInput, handleSecondaryTextInput }) => (
+const TextInputStep = ({primaryText, secondaryText, handlePrimaryTextInput, handleSecondaryTextInput}) => (
     <motion.div
-        initial={{ x: 300, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: -300, opacity: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={{x: 300, opacity: 0}}
+        animate={{x: 0, opacity: 1}}
+        exit={{x: -300, opacity: 0}}
+        transition={{duration: 0.5}}
         className="p-4 bg-white rounded-xl shadow-sm"
     >
         <h3 className="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">텍스트 입력</h3>
@@ -953,24 +964,24 @@ const TextInputStep = ({ primaryText, secondaryText, handlePrimaryTextInput, han
 
 // 3단계 폰트 설정
 const FontSettingsStep = ({
-    textStyle,
-    primaryText,
-    secondaryText,
-    handleFontSizeChange,
-    handleFontColorChange,
-    handleCommonStyleChange,
-    handleOutlinePropertyChange,
-    notoSansKr,
-    nanumGothic,
-    ibmPlexSansKr,
-    blackHanSans,
-    jua
-}) => (
+                              textStyle,
+                              primaryText,
+                              secondaryText,
+                              handleFontSizeChange,
+                              handleFontColorChange,
+                              handleCommonStyleChange,
+                              handleOutlinePropertyChange,
+                              notoSansKr,
+                              nanumGothic,
+                              ibmPlexSansKr,
+                              blackHanSans,
+                              jua
+                          }) => (
     <motion.div
-        initial={{ x: 300, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: -300, opacity: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={{x: 300, opacity: 0}}
+        animate={{x: 0, opacity: 1}}
+        exit={{x: -300, opacity: 0}}
+        transition={{duration: 0.5}}
     >
         <h3 className="text-xl font-semibold mb-4">3. 폰트 설정</h3>
 
@@ -1090,12 +1101,18 @@ const FontSettingsStep = ({
 );
 
 // 4단계 위치 설정
-const PositionSettingsStep = ({ primaryText, handlePositionChange, fixedPositions, textStyle, handleCommonStyleChange }) => (
+const PositionSettingsStep = ({
+                                  primaryText,
+                                  handlePositionChange,
+                                  fixedPositions,
+                                  textStyle,
+                                  handleCommonStyleChange
+                              }) => (
     <motion.div
-        initial={{ x: 300, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: -300, opacity: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={{x: 300, opacity: 0}}
+        animate={{x: 0, opacity: 1}}
+        exit={{x: -300, opacity: 0}}
+        transition={{duration: 0.5}}
         className="p-4 bg-white rounded-xl shadow-sm"
     >
         <h3 className="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">텍스트 위치 설정</h3>
@@ -1108,9 +1125,10 @@ const PositionSettingsStep = ({ primaryText, handlePositionChange, fixedPosition
                         id: 'top',
                         label: '상단',
                         icon: (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" />
-                                <line x1="7" y1="7" x2="17" y2="7" strokeWidth="2" />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <line x1="7" y1="7" x2="17" y2="7" strokeWidth="2"/>
                             </svg>
                         )
                     },
@@ -1118,9 +1136,10 @@ const PositionSettingsStep = ({ primaryText, handlePositionChange, fixedPosition
                         id: 'middle',
                         label: '중앙',
                         icon: (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" />
-                                <line x1="7" y1="12" x2="17" y2="12" strokeWidth="2" />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <line x1="7" y1="12" x2="17" y2="12" strokeWidth="2"/>
                             </svg>
                         )
                     },
@@ -1128,9 +1147,10 @@ const PositionSettingsStep = ({ primaryText, handlePositionChange, fixedPosition
                         id: 'bottom',
                         label: '하단',
                         icon: (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" />
-                                <line x1="7" y1="17" x2="17" y2="17" strokeWidth="2" />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <line x1="7" y1="17" x2="17" y2="17" strokeWidth="2"/>
                             </svg>
                         )
                     }
@@ -1141,7 +1161,7 @@ const PositionSettingsStep = ({ primaryText, handlePositionChange, fixedPosition
                         className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all cursor-pointer ${primaryText.position.y === fixedPositions[position.id]
                             ? 'bg-indigo-100 border-indigo-500 shadow-md transform -translate-y-1'
                             : 'bg-white border-gray-200 hover:border-indigo-300'
-                            }`}
+                        }`}
                     >
                         <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mb-2">
                             {position.icon}
@@ -1155,18 +1175,17 @@ const PositionSettingsStep = ({ primaryText, handlePositionChange, fixedPosition
 );
 
 
-
 const OptionsPage = ({
-    generatedText,
-    useInfo,
-    setUseInfo,
-    useKeyword,
-    setUseKeyword,
-    blogPosts,
-    selectedBlogs,
-    setSelectedBlogs,
-    fetchBlogPosts
-}) => {
+                         generatedText,
+                         useInfo,
+                         setUseInfo,
+                         useKeyword,
+                         setUseKeyword,
+                         blogPosts,
+                         selectedBlogs,
+                         setSelectedBlogs,
+                         fetchBlogPosts
+                     }) => {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [isSearching, setIsSearching] = useState(false);
 
@@ -1195,12 +1214,13 @@ const OptionsPage = ({
                                     onChange={(e) => setUseInfo(e.target.checked)}
                                     className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-indigo-600 checked:border-indigo-600"
                                 />
-                                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                <span
+                                    className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5"
-                                        viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                                         viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
                                         <path fillRule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clipRule="evenodd"></path>
+                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                              clipRule="evenodd"></path>
                                     </svg>
                                 </span>
                             </label>
@@ -1222,12 +1242,13 @@ const OptionsPage = ({
                                     onChange={(e) => setUseKeyword(e.target.checked)}
                                     className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-indigo-600 checked:border-indigo-600"
                                 />
-                                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                <span
+                                    className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5"
-                                        viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                                         viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
                                         <path fillRule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clipRule="evenodd"></path>
+                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                              clipRule="evenodd"></path>
                                     </svg>
                                 </span>
                             </label>
@@ -1263,13 +1284,18 @@ const OptionsPage = ({
                                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center justify-center disabled:bg-indigo-300"
                             >
                                 {isSearching ? (
-                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                                         fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor"
+                                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
                                 ) : (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none"
+                                         viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                     </svg>
                                 )}
                             </button>
@@ -1283,8 +1309,10 @@ const OptionsPage = ({
                             </div>
                         ) : blogPosts.length === 0 ? (
                             <div className="flex flex-col items-center justify-center p-6 text-gray-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2" fill="none"
+                                     viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                                 </svg>
                                 <p>검색된 블로그가 없습니다.</p>
                                 <p className="text-sm mt-1">다른 키워드로 검색해보세요.</p>
@@ -1296,7 +1324,7 @@ const OptionsPage = ({
                                     className={`border rounded-lg p-3 cursor-pointer transition hover:shadow-md ${selectedBlogs.includes(blog.link)
                                         ? 'bg-indigo-50 border-indigo-300'
                                         : 'bg-white hover:bg-gray-50'
-                                        }`}
+                                    }`}
                                     onClick={() => {
                                         if (selectedBlogs.includes(blog.link)) {
                                             setSelectedBlogs(selectedBlogs.filter(link => link !== blog.link));
@@ -1308,21 +1336,25 @@ const OptionsPage = ({
                                     <div className="flex items-start">
                                         <div className="flex-1 pr-2">
                                             <h4 className="font-medium text-gray-800 mb-1"
-                                                dangerouslySetInnerHTML={{ __html: blog.title }}></h4>
+                                                dangerouslySetInnerHTML={{__html: blog.title}}></h4>
                                             <p className="text-sm text-gray-600 line-clamp-2"
-                                                dangerouslySetInnerHTML={{ __html: blog.description }}></p>
+                                               dangerouslySetInnerHTML={{__html: blog.description}}></p>
                                             <p className="text-xs text-gray-500 mt-2">
                                                 {blog.postdate.slice(0, 4) + "-" + blog.postdate.slice(4, 6) + "-" + blog.postdate.slice(6, 8)}
                                             </p>
                                         </div>
                                         <div className="flex-shrink-0 ml-2">
-                                            <div className={`h-6 w-6 rounded-full flex items-center justify-center border ${selectedBlogs.includes(blog.link)
-                                                ? 'bg-indigo-600 border-indigo-600'
-                                                : 'border-gray-300'
+                                            <div
+                                                className={`h-6 w-6 rounded-full flex items-center justify-center border ${selectedBlogs.includes(blog.link)
+                                                    ? 'bg-indigo-600 border-indigo-600'
+                                                    : 'border-gray-300'
                                                 }`}>
                                                 {selectedBlogs.includes(blog.link) && (
-                                                    <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    <svg className="h-3 w-3 text-white" fill="currentColor"
+                                                         viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd"
+                                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                              clipRule="evenodd"/>
                                                     </svg>
                                                 )}
                                             </div>
@@ -1349,8 +1381,10 @@ const OptionsPage = ({
                         ></iframe>
                     ) : (
                         <div className="flex flex-col items-center justify-center bg-gray-50 h-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400 mb-4" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                             <p className="text-gray-500 text-lg mb-2">블로그를 선택하면 미리보기가 표시됩니다</p>
                             <p className="text-gray-400 text-sm">왼쪽에서 참조할 블로그를 검색하고 선택해주세요</p>
@@ -1363,17 +1397,16 @@ const OptionsPage = ({
 };
 
 
-
 const ResultsPage = ({
-    generatedText,
-    isGenerating,
-    editableTexts,
-    selectedTextIndex,
-    editMode,
-    onTextChange,
-    onToggleEditMode,
-    onSelectText
-}) => {
+                         generatedText,
+                         isGenerating,
+                         editableTexts,
+                         selectedTextIndex,
+                         editMode,
+                         onTextChange,
+                         onToggleEditMode,
+                         onSelectText
+                     }) => {
     // 텍스트가 초기값인지 확인하는 함수
     const isDefaultText = (text) => {
         return text === "글 생성 대기" || text === "";
@@ -1388,8 +1421,10 @@ const ResultsPage = ({
             {!hasGeneratedContent && !isGenerating && (
                 <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center">
                     <div className="flex justify-center items-center mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500 mr-2" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <span className="text-blue-800 font-medium">콘텐츠 생성 안내</span>
                     </div>
@@ -1401,8 +1436,9 @@ const ResultsPage = ({
             {hasGeneratedContent && !isGenerating && selectedTextIndex === null && (
                 <div className="bg-green-50 border border-green-200 p-4 rounded-lg text-center">
                     <div className="flex justify-center items-center mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500 mr-2" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                         </svg>
                         <span className="text-green-800 font-medium">콘텐츠가 생성되었습니다!</span>
                     </div>
@@ -1413,7 +1449,8 @@ const ResultsPage = ({
             {/* 로딩 상태 */}
             {isGenerating ? (
                 <div className="flex flex-col items-center justify-center py-12 px-4">
-                    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mb-4"></div>
+                    <div
+                        className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mb-4"></div>
                     <p className="text-lg text-gray-700 mb-2">AI가 콘텐츠를 생성하고 있습니다</p>
                     <p className="text-sm text-gray-500">잠시만 기다려주세요...</p>
                 </div>
@@ -1426,7 +1463,7 @@ const ResultsPage = ({
                             : hasGeneratedContent && !isDefaultText(editableTexts[0])
                                 ? 'border-gray-200 hover:border-indigo-300 cursor-pointer'
                                 : 'border-gray-200'
-                            }`}
+                        }`}
                         onClick={() => {
                             if (!editMode[0] && !editMode[1] && !isDefaultText(editableTexts[0])) {
                                 onSelectText(0);
@@ -1435,13 +1472,16 @@ const ResultsPage = ({
                     >
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center">
-                                <div className={`h-6 w-6 rounded-full flex items-center justify-center border mr-2 ${selectedTextIndex === 0
-                                    ? 'bg-indigo-600 border-indigo-600'
-                                    : 'border-gray-300'
+                                <div
+                                    className={`h-6 w-6 rounded-full flex items-center justify-center border mr-2 ${selectedTextIndex === 0
+                                        ? 'bg-indigo-600 border-indigo-600'
+                                        : 'border-gray-300'
                                     }`}>
                                     {selectedTextIndex === 0 && (
                                         <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            <path fillRule="evenodd"
+                                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                  clipRule="evenodd"/>
                                         </svg>
                                     )}
                                 </div>
@@ -1454,7 +1494,7 @@ const ResultsPage = ({
                                     : editMode[0]
                                         ? 'bg-green-500 text-white'
                                         : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                                    }`}
+                                }`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (!isDefaultText(editableTexts[0])) onToggleEditMode(0);
@@ -1480,8 +1520,10 @@ const ResultsPage = ({
                             <div className="whitespace-pre-wrap bg-gray-50 p-4 rounded-lg h-[400px] overflow-auto">
                                 {isDefaultText(editableTexts[0]) ? (
                                     <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3" fill="none"
+                                             viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                         </svg>
                                         <p className="text-lg">콘텐츠가 생성되지 않았습니다</p>
                                         <p className="text-sm mt-1">하단의 '글 생성' 버튼을 눌러주세요</p>
@@ -1500,7 +1542,7 @@ const ResultsPage = ({
                             : hasGeneratedContent && !isDefaultText(editableTexts[1])
                                 ? 'border-gray-200 hover:border-indigo-300 cursor-pointer'
                                 : 'border-gray-200'
-                            }`}
+                        }`}
                         onClick={() => {
                             if (!editMode[0] && !editMode[1] && !isDefaultText(editableTexts[1])) {
                                 onSelectText(1);
@@ -1509,13 +1551,16 @@ const ResultsPage = ({
                     >
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center">
-                                <div className={`h-6 w-6 rounded-full flex items-center justify-center border mr-2 ${selectedTextIndex === 1
-                                    ? 'bg-indigo-600 border-indigo-600'
-                                    : 'border-gray-300'
+                                <div
+                                    className={`h-6 w-6 rounded-full flex items-center justify-center border mr-2 ${selectedTextIndex === 1
+                                        ? 'bg-indigo-600 border-indigo-600'
+                                        : 'border-gray-300'
                                     }`}>
                                     {selectedTextIndex === 1 && (
                                         <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            <path fillRule="evenodd"
+                                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                  clipRule="evenodd"/>
                                         </svg>
                                     )}
                                 </div>
@@ -1528,7 +1573,7 @@ const ResultsPage = ({
                                     : editMode[1]
                                         ? 'bg-green-500 text-white'
                                         : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                                    }`}
+                                }`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (!isDefaultText(editableTexts[1])) onToggleEditMode(1);
@@ -1554,8 +1599,10 @@ const ResultsPage = ({
                             <div className="whitespace-pre-wrap bg-gray-50 p-4 rounded-lg h-[400px] overflow-auto">
                                 {isDefaultText(editableTexts[1]) ? (
                                     <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3" fill="none"
+                                             viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                         </svg>
                                         <p className="text-lg">콘텐츠가 생성되지 않았습니다</p>
                                         <p className="text-sm mt-1">하단의 '글 생성' 버튼을 눌러주세요</p>
@@ -1573,8 +1620,11 @@ const ResultsPage = ({
             {selectedTextIndex !== null && hasGeneratedContent && !isGenerating && (
                 <div className="bg-green-50 border border-green-200 p-4 rounded-lg text-center mt-4">
                     <div className="flex justify-center items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 mr-2"
+                             viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                  clipRule="evenodd"/>
                         </svg>
                         <span className="text-green-800 font-medium">
                             결과 {selectedTextIndex + 1}이(가) 선택되었습니다. 다음 단계로 진행하세요.
@@ -1587,215 +1637,303 @@ const ResultsPage = ({
 };
 
 
-
 // 최종 미리보기 페이지
 const TextPreviewStep = ({
-    editableTexts,
-    selectedTextIndex,
-    image,
-    thumbnailPreviewRef,
-    getTextStyle,
-    primaryText,
-    secondaryText,
-    previewPanelRef
-}) => {
+                             editableTexts,
+                             selectedTextIndex,
+                             image,
+                             thumbnailPreviewRef,
+                             getTextStyle,
+                             primaryText,
+                             secondaryText,
+                             previewPanelRef,
+                             isPosting
+                         }) => {
     const selectedText = editableTexts[selectedTextIndex];
 
     return (
         <motion.div
-            initial={{ x: 300, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -300, opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            initial={{x: 300, opacity: 0}}
+            animate={{x: 0, opacity: 1}}
+            exit={{x: -300, opacity: 0}}
+            transition={{duration: 0.5}}
             className="min-h-100"
         >
             <h3 className="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">최종 미리보기</h3>
 
-            <div className="flex flex-col md:flex-row gap-8">
-                {/* 텍스트 미리보기 영역 */}
-                <div className="w-full md:w-1/2">
-                    <div className="bg-white p-5 rounded-xl shadow-sm h-full">
-                        <h4 className="text-lg font-medium mb-4 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            선택된 텍스트
-                        </h4>
+            {/* 로딩 상태 */}
+            {isPosting ? (
+                <div className="flex flex-col items-center justify-center py-12 px-4 min-h-[600px]">
+                    <div
+                        className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-600 mb-4"></div>
+                    <p className="text-lg text-gray-700 mb-2">Instagram에 게시하고 있습니다</p>
+                    <p className="text-sm text-gray-500">잠시만 기다려주세요...</p>
+                </div>
+            ) : (
+                <div className="flex flex-col md:flex-row gap-8">
+                    {/* 텍스트 미리보기 영역 */}
+                    <div className="w-full md:w-1/2">
+                        <div className="bg-white p-5 rounded-xl shadow-sm h-full">
+                            <h4 className="text-lg font-medium mb-4 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600"
+                                     fill="none"
+                                     viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                선택된 텍스트
+                            </h4>
 
-                        <div className="bg-gray-50 p-4 rounded-lg h-[550px] overflow-y-auto custom-scrollbar border border-gray-100">
-                            {selectedText && selectedText !== "글 생성 대기" ? (
-                                <div className="whitespace-pre-wrap">{selectedText}</div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                    </svg>
-                                    <p>선택된 텍스트가 없습니다</p>
-                                    <p className="text-sm mt-1">이전 단계에서 텍스트를 선택해주세요</p>
-                                </div>
-                            )}
+                            <div
+                                className="bg-gray-50 p-4 rounded-lg h-[550px] overflow-y-auto custom-scrollbar border border-gray-100">
+                                {selectedText && selectedText !== "글 생성 대기" ? (
+                                    <div className="whitespace-pre-wrap">{selectedText}</div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3" fill="none"
+                                             viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                                                  d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                                        </svg>
+                                        <p>선택된 텍스트가 없습니다</p>
+                                        <p className="text-sm mt-1">이전 단계에서 텍스트를 선택해주세요</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* 이미지 미리보기 영역 */}
-                <div className="w-full md:w-1/2">
-                    <div className="bg-white p-5 rounded-xl shadow-sm h-full">
-                        <h4 className="text-lg font-medium mb-4 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            썸네일 미리보기
-                        </h4>
+                    {/* 이미지 미리보기 영역 */}
+                    <div className="w-full md:w-1/2">
+                        <div className="bg-white p-5 rounded-xl shadow-sm h-full">
+                            <h4 className="text-lg font-medium mb-4 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600"
+                                     fill="none"
+                                     viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                썸네일 미리보기
+                            </h4>
 
-                        <div ref={previewPanelRef} className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-5 shadow-lg flex items-center justify-center h-[550px]">
-                            <div ref={thumbnailPreviewRef} className="relative overflow-hidden w-full max-w-sm h-full mx-auto shadow-2xl rounded-lg">
-                                <img
-                                    src={image.src}
-                                    alt="썸네일 이미지"
-                                    className="absolute top-0 left-0 w-full h-full object-cover"
-                                />
-                                <div style={getTextStyle(false)}>{primaryText.content}</div>
-                                <div style={getTextStyle(true)}>{secondaryText.content}</div>
+                            <div ref={previewPanelRef}
+                                 className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-5 shadow-lg flex items-center justify-center h-[550px]">
+                                <div ref={thumbnailPreviewRef}
+                                     className="relative overflow-hidden w-full max-w-sm h-full mx-auto shadow-2xl rounded-lg">
+                                    <img
+                                        src={image.src}
+                                        alt="썸네일 이미지"
+                                        className="absolute top-0 left-0 w-full h-full object-cover"
+                                    />
+                                    <div style={getTextStyle(false)}>{primaryText.content}</div>
+                                    <div style={getTextStyle(true)}>{secondaryText.content}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
         </motion.div>
     );
 };
 
 
-
 const StepNavigation = ({
-    currentStep,
-    totalSteps,
-    onNext,
-    onPrev,
-    onComplete,
-    isDownloadEnabled,
-    isGenerating,
-    setIsGenerating,
-    setGeneratedText,
-    useInfo,
-    useKeyword,
-    selectedBlogs,
-    b_name,
-    b_address,
-    b_time,
-    b_number,
-    b_description
-}) => (
-    <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-100">
-        {/* 이전 버튼 - 첫 단계가 아닌 경우 표시 */}
-        {currentStep > 1 && (
-            <button
-                onClick={onPrev}
-                className="px-5 py-2.5 flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all focus:ring-2 focus:ring-indigo-200 shadow-sm"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                이전
-            </button>
-        )}
+                            currentStep,
+                            totalSteps,
+                            onNext,
+                            onPrev,
+                            onComplete,
+                            isDownloadEnabled,
+                            isGenerating,
+                            setIsGenerating,
+                            setGeneratedText,
+                            editableTexts,
+                            selectedTextIndex,
+                            isPosting,
+                            setIsPosting,
+                            useInfo,
+                            useKeyword,
+                            selectedBlogs,
+                            b_name,
+                            b_address,
+                            b_time,
+                            b_number,
+                            b_description
+                        }) => {
 
-        {/* 가운데 여백 또는 추가 기능을 위한 공간 */}
-        <div className="flex-1"></div>
-
-        {/* 단계별 특수 버튼 */}
-        <div className="flex gap-3">
-            {/* 4단계: 썸네일 다운로드 버튼 */}
-            {currentStep === 4 && (
+    return (
+        <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-100">
+            {/* 이전 버튼 - 첫 단계가 아닌 경우 표시 */}
+            {currentStep > 1 && (
                 <button
-                    onClick={onComplete}
-                    disabled={!isDownloadEnabled()}
-                    className={`px-5 py-2.5 flex items-center justify-center gap-2 rounded-lg transition ${isDownloadEnabled()
-                        ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-gray-400 text-white cursor-not-allowed'
+                    onClick={onPrev}
+                    className="px-5 py-2.5 flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all focus:ring-2 focus:ring-indigo-200 shadow-sm"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd"
+                              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                              clipRule="evenodd"/>
+                    </svg>
+                    이전
+                </button>
+            )}
+
+            {/* 가운데 여백 또는 추가 기능을 위한 공간 */}
+            <div className="flex-1"></div>
+
+            {/* 단계별 특수 버튼 */}
+            <div className="flex gap-3">
+                {/* 4단계: 썸네일 다운로드 버튼 */}
+                {currentStep === 4 && (
+                    <button
+                        onClick={onComplete}
+                        disabled={!isDownloadEnabled()}
+                        className={`px-5 py-2.5 flex items-center justify-center gap-2 rounded-lg transition ${isDownloadEnabled()
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : 'bg-gray-400 text-white cursor-not-allowed'
                         }`}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                    썸네일 다운로드
-                </button>
-            )}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fillRule="evenodd"
+                                  d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                                  clipRule="evenodd"/>
+                        </svg>
+                        썸네일 다운로드
+                    </button>
+                )}
 
-            {/* 6단계: 글 생성 버튼 */}
-            {currentStep === 6 && (
-                <button
-                    onClick={async () => {
-                        setIsGenerating(true);
-                        try {
-                            const fetchPromise1 = fetch(
-                                `${process.env.NEXT_PUBLIC_GCP_API_URL}/generate?name=${b_name}&address=${b_address}&time=${b_time}&number=${b_number}&description=${b_description}&use_info=${useInfo}&use_keyword=${useKeyword}&blogs=${selectedBlogs.join(',')}`
-                            ).then(response => response.json());
+                {/* 6단계: 글 생성 버튼 */}
+                {currentStep === 6 && (
+                    <button
+                        onClick={async () => {
+                            setIsGenerating(true);
+                            try {
+                                const fetchPromise1 = fetch(
+                                    `${process.env.NEXT_PUBLIC_GCP_API_URL}/generate?name=${b_name}&address=${b_address}&time=${b_time}&number=${b_number}&description=${b_description}&use_info=${useInfo}&use_keyword=${useKeyword}&blogs=${selectedBlogs.join(',')}`
+                                ).then(response => response.json());
 
-                            const fetchPromise2 = fetch(
-                                `${process.env.NEXT_PUBLIC_GCP_API_URL_2}/generate?name=${b_name}&address=${b_address}&time=${b_time}&number=${b_number}&description=${b_description}&use_info=${useInfo}&use_keyword=${useKeyword}&blogs=${selectedBlogs.join(',')}`
-                            ).then(response => response.json());
+                                const fetchPromise2 = fetch(
+                                    `${process.env.NEXT_PUBLIC_GCP_API_URL_2}/generate?name=${b_name}&address=${b_address}&time=${b_time}&number=${b_number}&description=${b_description}&use_info=${useInfo}&use_keyword=${useKeyword}&blogs=${selectedBlogs.join(',')}`
+                                ).then(response => response.json());
 
-                            const [result1, result2] = await Promise.all([fetchPromise1, fetchPromise2]);
-                            setGeneratedText([result1.generated_content, result2.generated_content]);
-                        } catch (error) {
-                            console.error('Error fetching data:', error);
-                        } finally {
-                            setIsGenerating(false);
-                        }
-                    }}
-                    disabled={isGenerating}
-                    className={`px-5 py-2.5 flex items-center justify-center gap-2 rounded-lg transition ${isGenerating ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
+                                const [result1, result2] = await Promise.all([fetchPromise1, fetchPromise2]);
+                                setGeneratedText([result1.generated_content, result2.generated_content]);
+                            } catch (error) {
+                                console.error('Error fetching data:', error);
+                            } finally {
+                                setIsGenerating(false);
+                            }
+                        }}
+                        disabled={isGenerating}
+                        className={`px-5 py-2.5 flex items-center justify-center gap-2 rounded-lg transition ${isGenerating ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
                         } text-white`}
-                >
-                    {isGenerating ? (
-                        <>
-                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            글 생성 중...
-                        </>
-                    ) : (
-                        <>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            글 생성
-                        </>
-                    )}
-                </button>
-            )}
+                    >
+                        {isGenerating ? (
+                            <>
+                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                                     fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                글 생성 중...
+                            </>
+                        ) : (
+                            <>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20"
+                                     fill="currentColor">
+                                    <path fillRule="evenodd"
+                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                          clipRule="evenodd"/>
+                                </svg>
+                                글 생성
+                            </>
+                        )}
+                    </button>
+                )}
 
-            {/* 7단계: 글 게시 버튼 */}
-            {currentStep === 7 && (
-                <button
-                    onClick={() => {
-                        // 실제 게시 로직 구현 필요
-                        alert("글이 성공적으로 게시되었습니다!");
-                    }}
-                    className="px-5 py-2.5 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    글 게시하기
-                </button>
-            )}
+                {/* 7단계: 글 게시 버튼 */}
+                {currentStep === 7 && (
+                    <button
+                        onClick={async () => {
+                            setIsPosting(true); // 로딩 시작
+                            try {
+                                const response = await fetch('/api/instagram/upload', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        imageUrl: "https://cytktlrbanxiswqurqth.supabase.co/storage/v1/object/public/images/menu_images/1/2025031122556MTI3MTQ3ODg5c2lxby5qcGc=",
+                                        caption: editableTexts[selectedTextIndex]
+                                    })
+                                })
 
-            {/* 다음 버튼 - 마지막 단계가 아닌 경우 표시 */}
-            {currentStep < totalSteps && (
-                <button
-                    onClick={onNext}
-                    className="px-5 py-2.5 flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-md"
-                >
-                    다음
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                    </svg>
-                </button>
-            )}
+                                const data = await response.json()
+
+                                if (data.success) {
+                                    alert("Instagram에 성공적으로 게시되었습니다!");
+                                } else {
+                                    alert("게시 실패: " + data.error);
+                                }
+                            } catch (error) {
+                                alert("게시 중 오류가 발생했습니다: " + error.message);
+                            } finally {
+                                setIsPosting(false); // 로딩 종료
+                            }
+                        }}
+                        disabled={isPosting}
+                        className={`px-5 py-2.5 flex items-center justify-center gap-2 rounded-lg transition-all ${
+                            isPosting
+                                ? 'bg-green-400 cursor-not-allowed'
+                                : 'bg-green-600 hover:bg-green-700'
+                        } text-white`}
+                    >
+                        {isPosting ? (
+                            <>
+                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                                     fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Instagram에 게시 중...
+                            </>
+                        ) : (
+                            <>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20"
+                                     fill="currentColor">
+                                    <path fillRule="evenodd"
+                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                          clipRule="evenodd"/>
+                                </svg>
+                                Instagram에 게시하기
+                            </>
+                        )}
+                    </button>
+                )}
+
+
+                {/* 다음 버튼 - 마지막 단계가 아닌 경우 표시 */}
+                {currentStep < totalSteps && (
+                    <button
+                        onClick={onNext}
+                        className="px-5 py-2.5 flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-md"
+                    >
+                        다음
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fillRule="evenodd"
+                                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                  clipRule="evenodd"/>
+                        </svg>
+                    </button>
+                )}
+            </div>
         </div>
-    </div>
-);
+    );
+};
